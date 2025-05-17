@@ -1,0 +1,76 @@
+services:
+
+#  backend:
+##    build:
+##      context: ./src
+##      dockerfile: Dockerfile
+#    build: .
+#    env_file:
+#      - .env
+#    container_name: backend_app
+#    environment:
+#      HOST: dataBase
+#      DB_PORT: 3306
+#      DB_USERNAME: livestream
+#      PASSWORD: livestream
+#      DATABASE: livestream
+#      NODE_ENV: production
+#    ports:
+#      - "3000:3000"
+#    depends_on:
+#      - db
+#    restart: always
+#    networks:
+#      - mynetwork
+
+  db:
+    image: mysql:5.7
+    container_name: dataBase
+#    environment:
+#      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_DATABASE: livestream
+#      MYSQL_USER: livestream
+#      MYSQL_PASSWORD: livestream
+#    ports:
+#      - "3306:3306"
+    environment:
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ADDON_PASSWORD}
+        MYSQL_DATABASE: ${MYSQL_ADDON_DB}
+        MYSQL_USER: ${MYSQL_ADDON_USER}
+        MYSQL_PASSWORD: ${MYSQL_ADDON_PASSWORD}
+    ports:
+        - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+     - mynetwork
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpMyAdmin
+    environment:
+      PMA_HOST: dataBase
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 8080:80
+    networks:
+      - mynetwork
+
+#  redis:
+#      image: redis:alpine
+#      container_name: redis
+#      ports:
+#        - "6379:6379"
+#      volumes:
+#        - redis_data:/data
+#      networks:
+#        - mynetwork
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  mynetwork:

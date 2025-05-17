@@ -1,0 +1,19 @@
+# Ignoră node_modules - aceste fișiere vor fi regăsite după ce rulezi `npm install` în container
+node_modules/
+
+# Ignoră fișierele temporare pentru dezvoltare
+*.log
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Ignoră fișierele de configurare ale IDE-urilor și editorilor
+.vscode/
+.idea/
+
+# Ignoră fișierele generate pentru testare (exemplu pentru Jest)
+coverage/
+
+# Ignoră fișierele de configurare pentru OS (ex. Windows)
+.DS_Store
+Thumbs.db
