@@ -9,18 +9,18 @@ import { LoginGuard } from "../auth/guards/login.guards";
 export class RatingController {
   constructor(private readonly ratingService: RatingService) {}
 
-  @UseGuards(LoginGuard)
-  @Post('id/:id')
-  async create(@Res() res, @Req() req, @Param('id') moviePersonId: string, @Body() createPersonDto: CreateRatingDto) {
-    try {
-      const userId = req.user.decodedAccessToken.id
-
-      const person = await this.ratingService.create(userId, moviePersonId, createPersonDto);
-      return res.status(HttpStatus.CREATED).json(person);
-    } catch (e) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ message: e.message });
-    }
-  }
+  // @UseGuards(LoginGuard)
+  // @Post('id/:id')
+  // async create(@Res() res, @Req() req, @Param('id') moviePersonId: string, @Body() createPersonDto: CreateRatingDto) {
+  //   try {
+  //     const userId = req.user.decodedAccessToken.id
+  //
+  //     const person = await this.ratingService.create(userId, moviePersonId, createPersonDto);
+  //     return res.status(HttpStatus.CREATED).json(person);
+  //   } catch (e) {
+  //     return res.status(HttpStatus.BAD_REQUEST).json({ message: e.message });
+  //   }
+  // }
 
   @Get('id/:id')
   async findOne(@Res() res, @Param('id') id: string) {
@@ -43,15 +43,20 @@ export class RatingController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Patch('rate/id/:id')
   async updateRating(@Res() res, @Req() req, @Param('id') id: string, @Body() dto: CreateRatingDto) {
     try {
+      console.log('rating');
       const userId = req.user.decodedAccessToken.id;
-      const room = await this.ratingService.updateMoviePersonRating(
+
+      console.log(userId);
+
+      const rate = await this.ratingService.updateMoviePersonRating(
         id,
         userId,
         dto.rating)
-      return res.status(HttpStatus.CREATED).json(room);
+      return res.status(HttpStatus.CREATED).json(rate);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }

@@ -6,6 +6,7 @@ import { RatingType } from "../shared/rating-type";
 import { RoomService } from "../room/room.service";
 import { RoomEntity } from "../room/entities/room.entity";
 import { MoviePersonRole } from "../shared/movie-person-role";
+import { PersonEntity } from "../person/entities/person.entity";
 
 @Injectable()
 export class RatingService {
@@ -16,27 +17,28 @@ export class RatingService {
   ) {
   }
 
-  async create(userId: string, movieOrPersonId: string, dto: CreateRatingDto) {
-    try {
-      const rating = new RatingEntity();
-      rating.userId = userId;
-      rating.rating = parseFloat(dto.rating);
-      rating.ratingsCount = rating.ratingsCount + 1;
-      rating.type = dto.type;
+  // async create(userId: string, movieOrPersonId: string, dto: CreateRatingDto) {
+  //   try {
+  //     const rating = new RatingEntity();
+  //     rating.userId = userId;
+  //     rating.rating = parseFloat(dto.rating);
+  //     rating.ratingsCount = rating.ratingsCount + 1;
+  //     rating.type = dto.type;
+  //
+  //     if (dto.type.includes(MoviePersonRole.Producer) || dto.type.includes(MoviePersonRole.Actor) || dto.type.includes(MoviePersonRole.Director)) {
+  //       const person = await this.personService.findOne(movieOrPersonId);
+  //       rating.person = person;
+  //     } else {
+  //      const room = await this.roomService.findOne(movieOrPersonId);
+  //      rating.room = room;
+  //     }
+  //
+  //     return rating.save();
+  //   } catch (e) {
+  //     throw new BadRequestException(e.message);
+  //   }
+  // }
 
-      if (dto.type.includes(MoviePersonRole.Producer) || dto.type.includes(MoviePersonRole.Actor) || dto.type.includes(MoviePersonRole.Director)) {
-        const person = await this.personService.findOne(movieOrPersonId);
-        rating.person = person;
-      } else {
-       const room = await this.roomService.findOne(movieOrPersonId);
-       rating.room = room;
-      }
-
-      return rating.save();
-    } catch (e) {
-      throw new BadRequestException(e.message);
-    }
-  }
   async findOne(id: string) {
     try {
       return await RatingEntity.findOneBy({
@@ -62,9 +64,13 @@ export class RatingService {
   async updateMoviePersonRating(moviePersonId: string, userId: string, rating: string) {
     try {
 
-      // const movie = await RoomEntity.findOne({ where: { id: moviePersonId } });
-      // const person = await PersonEntity.findOne({ where: { id: moviePersonId } });
-      //
+      console.log('dmn');
+      const movie = await RoomEntity.findOne({ where: { id: moviePersonId } });
+      const person = await PersonEntity.findOne({ where: { id: moviePersonId } });
+
+      if (!movie && !person) {
+        throw new NotFoundException('Movie or Person not found');
+      }
 
       const newRating = Number(rating);
       if (isNaN(newRating) || newRating < 1 || newRating > 10) {
@@ -80,6 +86,9 @@ export class RatingService {
 
 
       if (existingRating) {
+
+
+        console.log('exists ?');
 
         const oldTotal = existingRating.rating * existingRating.ratingsCount;
         const newRatingsCount = existingRating.ratingsCount + 1;
@@ -97,20 +106,31 @@ export class RatingService {
         };
       } else {
 
+        console.log(' create new rating');
         // const newRatingEntity = new RatingEntity();
 
-        const newRatingsCount = existingRating.ratingsCount + 1;
-        const newAverageRating = newRating / newRatingsCount;
+        const newRatingEntity = new RatingEntity();
 
-        existingRating.rating = parseFloat(newAverageRating.toFixed(2));
-        existingRating.ratingsCount = newRatingsCount;
+        newRatingEntity.userId = userId;
+        newRatingEntity.ratingsCount = 1;
+        newRatingEntity.rating = +rating;
 
-        await existingRating.save();
+        if (movie) {
+          newRatingEntity.type = movie.type;
+          newRatingEntity.room = movie;
+        }
+
+        if (person) {
+          newRatingEntity.type = person.roles;
+          newRatingEntity.person = person;
+        }
+
+        await newRatingEntity.save();
 
         return {
-          message: 'Rating updated successfully',
-          newRating: existingRating.rating,
-          ratingsCount: existingRating.ratingsCount,
+          message: 'Rating created successfully',
+          newRating: newRatingEntity.rating,
+          ratingsCount: newRatingEntity.ratingsCount,
         };
       }
     } catch (e) {

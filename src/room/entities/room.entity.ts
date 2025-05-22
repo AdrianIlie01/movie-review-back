@@ -2,6 +2,7 @@ import { BaseEntity, Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn
 import { MoviePersonEntity } from "../../movie-person/entities/movie-person.entity";
 import { MoviePersonRole } from "../../shared/movie-person-role";
 import { RatingEntity } from "../../rating/entities/rating.entity";
+import { MovieType } from "../../shared/movie-type";
 @Entity('room')
 export class RoomEntity extends BaseEntity {
 
@@ -18,7 +19,7 @@ export class RoomEntity extends BaseEntity {
   thumbnail: string;
 
   @Column({ type: 'simple-array', nullable: true })
-  type: string[];
+  type: MovieType[];
 
   @Column({ type: 'varchar', nullable: true })
   release_year: string;

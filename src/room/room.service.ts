@@ -3,12 +3,13 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { UserEntity } from "../user/entities/user.entity";
 import { RoomEntity } from "./entities/room.entity";
-import { getRepository, Raw, Repository } from "typeorm";
+import { getRepository, Like, MoreThanOrEqual, Raw, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { RatingService } from "../rating/rating.service";
 import { PersonEntity } from "../person/entities/person.entity";
 import { MovieType } from "../shared/movie-type";
 import { RatingEntity } from "../rating/entities/rating.entity";
+import { FilterMovies } from "../shared/filter-movies";
 
 @Injectable()
 export class RoomService {
@@ -53,6 +54,48 @@ export class RoomService {
       throw new BadRequestException(e.message);
     }
   }
+
+  async filterMovies(query: {
+    type?: string;
+    name?: string;
+    ratingMin?: number;
+    sortField?: string;
+    sortOrder?: 'ASC' | 'DESC';
+  }) {
+    try {
+      const qb = RoomEntity.createQueryBuilder('room')
+        .leftJoinAndSelect('room.rating', 'rating');
+
+      if (query.type) {
+        qb.andWhere('room.type = :type', { type: query.type });
+      }
+
+      if (query.name) {
+        qb.andWhere('LOWER(room.name) LIKE :name', {
+          name: `%${query.name.toLowerCase()}%`,
+        });
+      }
+
+      if (query.ratingMin !== undefined) {
+        qb.andWhere('rating.rating >= :ratingMin', {
+          ratingMin: query.ratingMin,
+        });
+      }
+
+      if (query.sortField && query.sortOrder) {
+        const allowedSortFields = ['name', 'type', 'rating'];
+        if (allowedSortFields.includes(query.sortField)) {
+          const sortAlias = query.sortField === 'rating' ? 'rating' : 'room';
+          qb.orderBy(`${sortAlias}.${query.sortField}`, query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
+        }
+      }
+
+      return await qb.getMany();
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
 
   async findOne(id: string) {
     try {
@@ -99,7 +142,7 @@ export class RoomService {
     // file: Express.Multer.File,
   ) {
     try {
-      const { name, stream_url, thumbnail, type, release_year } = updateRoomDto;
+      const { name, stream_url, thumbnail, release_year } = updateRoomDto;
       const room = await RoomEntity.findOneBy({
         id: id,
       });
@@ -111,6 +154,7 @@ export class RoomService {
       const roomName = room.name;
       const roomStreamUrl = room.stream_url;
       const roomThumbnail = room.thumbnail;
+      const releaseYear = room.release_year;
 
       typeof name !== 'undefined'
         ? (room.name = name)
@@ -119,6 +163,10 @@ export class RoomService {
       typeof stream_url !== 'undefined'
         ? (room.stream_url = stream_url)
         : (room.stream_url = roomStreamUrl);
+
+      typeof release_year !== 'undefined'
+        ? (room.release_year = name)
+        : (room.release_year = roomName);
 
       typeof thumbnail !== 'undefined'
         ? room.thumbnail = thumbnail

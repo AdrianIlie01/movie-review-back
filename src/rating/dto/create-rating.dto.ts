@@ -10,9 +10,8 @@ export class CreateRatingDto {
 
 
   // i can use it to share top x persons or movies
-  @IsArray()
-  @IsEnum(MoviePersonRole, { each: true })
-  @IsEnum(MovieType, { each: true })
-  type?: (MoviePersonRole | MovieType)[];
+  // @IsArray()
+  // @IsEnum(RatingType, { each: true })
+  // type?: (MoviePersonRole | MovieType)[];
 
 }

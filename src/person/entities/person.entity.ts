@@ -24,7 +24,7 @@ export class PersonEntity extends BaseEntity {
 
 
   @Column({ type: 'simple-array', nullable: true })
-  roles: string[];
+  roles: MoviePersonRole[];
 
   // @Column({ type: 'enum', enum: MoviePersonRole })
   // roles: MoviePersonRole[];

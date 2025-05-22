@@ -9,13 +9,16 @@ import {
   UseGuards,
   Res,
   HttpStatus,
-  UploadedFile, Req
+  UploadedFile, Req, Query
 } from "@nestjs/common";
 import { RoomService } from './room.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { CreateRatingDto } from "../rating/dto/create-rating.dto";
 import { MovieType } from "../shared/movie-type";
+import { LoginGuard } from "../auth/guards/login.guards";
+import { StripeIdGuard } from "../auth/guards/stripe-id.guard";
+import { FilterMovies } from "../shared/filter-movies";
 
 @Controller('room')
 export class RoomController {
@@ -81,6 +84,17 @@ export class RoomController {
       console.log('find by type');
       const room = await this.roomService.findByType(type);
       return res.status(HttpStatus.CREATED).json(room);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+
+  @Get('filter')
+  async filter(@Res() res, @Query() query: FilterMovies) {
+    try {
+      const filter = await this.roomService.filterMovies(query);
+      return res.status(HttpStatus.CREATED).json(filter);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }
