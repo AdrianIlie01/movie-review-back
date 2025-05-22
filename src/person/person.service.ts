@@ -4,6 +4,8 @@ import { UpdatePersonDto } from './dto/update-person.dto';
 import { PersonEntity } from "./entities/person.entity";
 import { RatingEntity } from "../rating/entities/rating.entity";
 import { MoviePersonRole } from "../shared/movie-person-role";
+import { RoomEntity } from "../room/entities/room.entity";
+import { FilterPerson } from "../shared/filter-person";
 
 @Injectable()
 export class PersonService {
@@ -65,6 +67,49 @@ export class PersonService {
       throw new BadRequestException(e.message);
     }
   }
+
+  async filterPerson(query: FilterPerson) {
+      try {
+        const qb = PersonEntity.createQueryBuilder('person')
+          .leftJoinAndSelect('person.rating', 'rating');
+
+        if (query.roles && query.roles.length > 0) {
+          qb.andWhere('FIND_IN_SET(:roles, person.roles) > 0', { roles: query.roles });
+
+        }
+
+        if (query.name) {
+          qb.andWhere('LOWER(person.name) LIKE :name', {
+            name: `%${query.name.toLowerCase()}%`,
+          });
+        }
+
+        if (query.born) {
+          qb.andWhere('YEAR(person.born) = :bornYear', { bornYear: query.born });
+        }
+
+
+        if (query.ratingMin !== undefined) {
+          qb.andWhere('rating.rating >= :ratingMin', {
+            ratingMin: query.ratingMin,
+          });
+        }
+
+        if (query.sortField && query.sortOrder) {
+          const allowedSortFields = ['name', 'rating', 'release_year', 'born'];
+          if (allowedSortFields.includes(query.sortField)) {
+            let sortColumn = query.sortField;
+            const sortAlias = query.sortField === 'rating' ? 'rating' : 'person'; // random name for the join
+
+            qb.orderBy(`${sortAlias}.${sortColumn}`, query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
+          }
+        }
+
+        return await qb.getMany();
+      } catch (e) {
+        throw new BadRequestException(e.message);
+      }
+    }
 
   async addImageToPerson(id: string, newImage: string) {
     try {

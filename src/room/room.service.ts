@@ -55,19 +55,18 @@ export class RoomService {
     }
   }
 
-  async filterMovies(query: {
-    type?: string;
-    name?: string;
-    ratingMin?: number;
-    sortField?: string;
-    sortOrder?: 'ASC' | 'DESC';
-  }) {
+  //filter movie by:
+  // movie type: string
+  // name - if it contains that string
+  // order by rating ASC or DESC
+  async filterMovies(query: FilterMovies) {
     try {
       const qb = RoomEntity.createQueryBuilder('room')
         .leftJoinAndSelect('room.rating', 'rating');
 
       if (query.type) {
-        qb.andWhere('room.type = :type', { type: query.type });
+        // qb.andWhere('room.type = :type', { type: query.type });
+        qb.andWhere('FIND_IN_SET(:type, room.type) > 0', { type: query.type });
       }
 
       if (query.name) {
@@ -82,10 +81,14 @@ export class RoomService {
         });
       }
 
+      if (query.releaseYear) {
+        qb.andWhere('room.release_year = :releaseYear', { releaseYear: query.releaseYear });
+      }
+
       if (query.sortField && query.sortOrder) {
-        const allowedSortFields = ['name', 'type', 'rating'];
+        const allowedSortFields = ['name', 'type', 'rating', 'release_year'];
         if (allowedSortFields.includes(query.sortField)) {
-          const sortAlias = query.sortField === 'rating' ? 'rating' : 'room';
+          const sortAlias = query.sortField === 'rating' ? 'rating' : 'room'; // random name for the join
           qb.orderBy(`${sortAlias}.${query.sortField}`, query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
         }
       }

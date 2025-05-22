@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Res } from "@nestjs/common";
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Res, Query } from "@nestjs/common";
 import { PersonService } from './person.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
-import { MovieType } from "../shared/movie-type";
 import { MoviePersonRole } from "../shared/movie-person-role";
+import { FilterMovies } from "../shared/filter-movies";
 
 @Controller('person')
 export class PersonController {
@@ -19,6 +19,15 @@ export class PersonController {
     }
   }
 
+  @Get('filter')
+  async filter(@Res() res, @Query() query: FilterMovies) {
+    try {
+      const filter = await this.personService.filterPerson(query);
+      return res.status(HttpStatus.CREATED).json(filter);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
   @Get()
   async findAll(@Res() res) {
     try {
