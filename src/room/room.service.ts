@@ -1,26 +1,230 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
+import { UserEntity } from "../user/entities/user.entity";
+import { RoomEntity } from "./entities/room.entity";
+import { getRepository, Raw, Repository } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { RatingService } from "../rating/rating.service";
+import { PersonEntity } from "../person/entities/person.entity";
+import { MovieType } from "../shared/movie-type";
+import { RatingEntity } from "../rating/entities/rating.entity";
 
 @Injectable()
 export class RoomService {
-  create(createRoomDto: CreateRoomDto) {
-    return 'This action adds a new room';
+  constructor(
+    @InjectRepository(RoomEntity)
+    private readonly roomRepository: Repository<RoomEntity>,
+  ) {
+  }
+  async create(createRoomDto: CreateRoomDto) {
+    try{
+      const {name, stream_url, thumbnail, type, release_year} = createRoomDto;
+      const room = new RoomEntity();
+      room.name = name;
+      room.stream_url = stream_url;
+      room.release_year = release_year
+
+      room.type = type;
+
+
+
+      // if (file) {
+      //   room.thumbnail = file.filename;
+      // }
+
+      // todo - we will not use an image
+      //  because the server where i host my app doesnt allow on my free plan to store files on it
+        room.thumbnail = thumbnail;
+
+      const savedRoom = await room.save();
+      console.log(savedRoom);
+
+      return savedRoom;
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
   }
 
-  findAll() {
-    return `This action returns all room`;
+  async findAll() {
+    try {
+      return await RoomEntity.find();
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} room`;
+  async findOne(id: string) {
+    try {
+     return await RoomEntity.findOneBy({
+        id: id,
+      });
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
-  update(id: number, updateRoomDto: UpdateRoomDto) {
-    return `This action updates a #${id} room`;
+  async findByName(name: string) {
+    try {
+      const room = await RoomEntity.find({
+        where: {
+          name: name,
+        },
+      });
+      console.log(room);
+      return room;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} room`;
+  async findByType(type: string) {
+    try {
+      const room = await RoomEntity.find({
+        where: {
+          // type: type,
+          type: Raw(alias => `${alias} LIKE :type`, { type: `%${type}%` }),
+        },
+      });
+      console.log(room);
+      return room;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async update(
+    id: string,
+    updateRoomDto: UpdateRoomDto,
+    // file: Express.Multer.File,
+  ) {
+    try {
+      const { name, stream_url, thumbnail, type, release_year } = updateRoomDto;
+      const room = await RoomEntity.findOneBy({
+        id: id,
+      });
+
+      if (!room) {
+        throw new BadRequestException('Room not found');
+      }
+
+      const roomName = room.name;
+      const roomStreamUrl = room.stream_url;
+      const roomThumbnail = room.thumbnail;
+
+      typeof name !== 'undefined'
+        ? (room.name = name)
+        : (room.name = roomName);
+
+      typeof stream_url !== 'undefined'
+        ? (room.stream_url = stream_url)
+        : (room.stream_url = roomStreamUrl);
+
+      typeof thumbnail !== 'undefined'
+        ? room.thumbnail = thumbnail
+        : room.thumbnail = roomThumbnail;
+
+      return await room.save();
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async addTypeToMovie(id: string, newType: MovieType[]) {
+    try {
+      const movie = await RoomEntity.findOneBy({ id });
+      if (!movie) {
+        throw new NotFoundException(`Movie with id ${id} not found`);
+      }
+
+      if (!movie.type) {
+        movie.type = [];
+      }
+
+      const typesToAdd = newType.filter(t=> !movie.type.includes(t));
+
+      if (typesToAdd.length === 0) {
+        throw new BadRequestException(`Types '${newType}' already exist for this movie`);
+      }
+
+
+      movie.type.push(...typesToAdd);
+
+      //find the coresponding rating and update its type
+
+      const ratingEntity = await RatingEntity.findOne({
+        where: {
+          room: {id: id}
+        }
+      })
+
+      if (ratingEntity) {
+        ratingEntity.type.push(...typesToAdd);
+        await ratingEntity.save();
+      }
+
+
+      await movie.save();
+      return movie;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async removeTypeFromMovie(id: string, typeToRemove: MovieType[]) {
+    try {
+      const movie = await RoomEntity.findOneBy({ id });
+      if (!movie) {
+        throw new NotFoundException(`Movie with id ${id} not found`);
+      }
+
+      if (!movie.type || movie.type.length === 0) {
+        return movie;
+      }
+
+      // salvam movie type ca array-ul type fara type din input
+      movie.type = movie.type.filter((t: MovieType) => !typeToRemove.includes(t));
+
+
+      const ratingEntity = await RatingEntity.findOne({
+        where: {
+          room: {id: id}
+        }
+      })
+
+      if (ratingEntity) {
+        ratingEntity.type = ratingEntity.type.filter(
+          (t: MovieType) => !typeToRemove.includes(t)
+        );
+
+        await ratingEntity.save();
+      }
+
+
+      await movie.save();
+
+      return movie;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+
+  async remove(id: string) {
+    try {
+
+      const room = await RoomEntity.findOneBy({
+        id: id,
+      });
+
+      if (!room) {
+        throw new BadRequestException('Room not found');
+      }
+      await room.remove();
+
+      return {message: 'Room deleted successfully'};
+      } catch (e) {
+        throw new BadRequestException(e.message);
+      }
   }
 }

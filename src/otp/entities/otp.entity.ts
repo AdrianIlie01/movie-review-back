@@ -25,7 +25,7 @@ export class OtpEntity extends BaseEntity {
   @Column({ type: 'datetime' })
   expires_at: Date;
 
-  @ManyToOne(() => UserEntity, (user: UserEntity) => user.otp, {eager: true})
+  @ManyToOne(() => UserEntity, (user: UserEntity) => user.otp, {eager: true, onDelete: 'CASCADE'})
   @JoinColumn({ name: 'user', referencedColumnName: 'id' })
   user: UserEntity;
 }

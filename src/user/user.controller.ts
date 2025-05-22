@@ -8,11 +8,15 @@ import {
   Delete,
   BadRequestException,
   HttpStatus,
-  Res, Req
+  Res, Req, UseGuards
 } from "@nestjs/common";
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { LoginGuard } from "../auth/guards/login.guards";
+import { ChangeEmailDto } from "./dto/change-email.dto";
+import { ResetForgottenPasswordDto } from "./dto/reset-forgotten-password.dto";
+import { UpdatePasswordDto } from "./dto/update-password.dto";
 
 @Controller('user')
 export class UserController {
@@ -51,6 +55,42 @@ export class UserController {
         console.log('nu are cookeis access_token => aunoth access');
         return res.status(HttpStatus.UNAUTHORIZED).json({ message: "Unauthorized: access_token missing" });
       }
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @UseGuards(LoginGuard)
+  @Patch('/update-pass-log/:id')
+  async updatePasswordLoggedIN(
+    @Res() res,
+    @Param('id') id: string,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    try {
+      const user = await this.userService.updatePasswordLoggedIn(
+        id,
+        updatePasswordDto,
+      );
+      return res.status(HttpStatus.OK).json(user);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @Patch('reset-forgotten-password')
+  async resetPassword(
+    @Res() res,
+    @Body() resetForgottenPassword: ResetForgottenPasswordDto,
+  ) {
+    try {
+      const ip = 'ip';
+      const reset = await this.userService.resetPassword(
+        resetForgottenPassword,
+        ip,
+      );
+
+      return res.status(HttpStatus.OK).json(reset);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }
@@ -104,6 +144,41 @@ export class UserController {
     try {
       const user = await this.userService.update(id, updateUserDto);
       return res.status(HttpStatus.OK).json(user);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @UseGuards(LoginGuard)
+  @Patch('change-email/:id')
+  async changeEmail(
+    @Res() res,
+    @Param('id') id: string,
+    @Body() changeEmail: ChangeEmailDto,
+    // after the otp was sent => 2 fields: otp for verification + new email
+  ) {
+    try {
+      const ip = 'ip';
+      const user = await this.userService.changeEmail(id, changeEmail, ip);
+      return res.status(HttpStatus.OK).json(user);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @Post('send-otp-reset-password')
+  async sendOtpChangePassword(
+    @Res() res,
+    @Body('userIdentifier') userIdentifier: string,
+  ) {
+    try {
+      const ip = 'ip';
+      const reset = await this.userService.sendEmailResetPassword(
+        userIdentifier,
+        ip,
+      );
+
+      return res.status(HttpStatus.OK).json(reset);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }

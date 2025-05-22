@@ -1,9 +1,7 @@
 import { BadRequestException, Inject, Injectable } from "@nestjs/common";
-import { MAILER_TRANSPORTER } from "../shared/mail.constants";
 import * as nodemailer from 'nodemailer';
 import * as process from "process";
 import { SendOtpEmail } from "./dto/send-otp-email";
-// import { videoPath } from "../shared/video-path";
 
 @Injectable()
 export class MailService {
@@ -74,13 +72,10 @@ export class MailService {
           </head>
           <body>
             <div class="container">
-              <h1>Salut, ${sendOtpEmail.username}!</h1>
-              <p>Aceasta este o imagine atașată și un mesaj HTML.</p>
-              <p>Verifică atașamentul pentru mai multe informații.</p>
+<!--              <h1>Salut, ${sendOtpEmail.username}!</h1>-->
               
                  <p>Hi ${sendOtpEmail.username} your OTP is ${sendOtpEmail.otp}</p>
 
-              <a href="#" class="cta-button">Accesează link-ul</a>
             </div>
           </body>
         </html>`,
@@ -96,4 +91,27 @@ export class MailService {
       throw new BadRequestException(e.message)
     }
   }
+
+  async sendOtpEmail(email: string, username: string, otp: string) {
+    try {
+
+      const emailSent = await this.transporter.sendMail({
+        to: email,
+        subject: 'Cod verificare OTP',
+        template: './sentOtp',
+        context: {
+          name: username,
+          otp: otp,
+        },
+      });
+      console.log('email sent');
+      console.log(emailSent);
+      return emailSent;
+    } catch (e) {
+      console.log(e.message);
+      console.log(e);
+      throw new BadRequestException(e.message);
+    }
+  }
+
 }

@@ -15,6 +15,7 @@ import { TokenBlackListEntity } from "../token-black-list/entities/token-black-l
 import { OtpService } from "../otp/otp.service";
 import { TokenBlackListService } from "../token-black-list/token-black-list.service";
 import { SessionService } from "../session/session.service";
+import { StripeService } from "../stripe/stripe.service";
 
 @Module({
   imports: [
@@ -34,7 +35,8 @@ import { SessionService } from "../session/session.service";
     LoginStrategy,
     LoginGuard,
     RefreshTokenGuard,
-    SessionService
+    SessionService,
+    StripeService,
   ],
 })
 export class AuthModule {}

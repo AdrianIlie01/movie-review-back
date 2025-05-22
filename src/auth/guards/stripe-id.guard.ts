@@ -1,0 +1,63 @@
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  NotFoundException,
+  ForbiddenException
+} from "@nestjs/common";
+import { Reflector } from '@nestjs/core';
+import { UserService } from '../../user/user.service';
+import { JwtService } from '@nestjs/jwt';
+import * as jwt from "jsonwebtoken";
+
+@Injectable()
+export class StripeIdGuard implements CanActivate {
+  constructor(
+    private reflector: Reflector,
+    private readonly userService: UserService,
+    private jwtService: JwtService,
+  ) {}
+
+  async canActivate(context: ExecutionContext) {
+    try {
+
+      console.log('stripe id guard');
+
+      const request = context.switchToHttp().getRequest();
+
+      const accessToken = request.cookies.access_token;
+
+      if (!accessToken) {
+        throw new UnauthorizedException('Token missing');
+      }
+
+      const decodedToken: any = jwt.verify(accessToken, process.env.SECRET_JWT);
+
+      const userName = decodedToken.username;
+
+      const user = await this.userService.findOneByName(userName);
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const userId = decodedToken.id;
+
+      const idFromCode = request.params.id;
+
+      if (userId === idFromCode) {
+        return true; // allow access
+      } else {
+        // return false; // deny access
+        throw new UnauthorizedException('User ID does not match');
+
+      }
+
+    } catch (e) {
+      console.error('Error in StripeIdGuard:', e);
+      throw new ForbiddenException(e.message);
+      // throw e;
+    }
+  }
+}

@@ -1,5 +1,7 @@
 import { BaseEntity, Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import { RoomStatus } from "../../shared/room-status";
+import { MoviePersonEntity } from "../../movie-person/entities/movie-person.entity";
+import { MoviePersonRole } from "../../shared/movie-person-role";
+import { RatingEntity } from "../../rating/entities/rating.entity";
 @Entity('room')
 export class RoomEntity extends BaseEntity {
 
@@ -15,16 +17,15 @@ export class RoomEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: true })
   thumbnail: string;
 
-  @Column({ type: 'boolean', default: false })
-  private: boolean;
+  @Column({ type: 'simple-array', nullable: true })
+  type: string[];
 
-  @Column({ type: 'enum', enum: RoomStatus, default: RoomStatus.Free })
-  room_status: RoomStatus;
+  @Column({ type: 'varchar', nullable: true })
+  release_year: string;
 
-  @Column({ type: 'boolean', default: false })
-  is_video: boolean;
+  @OneToMany(() => MoviePersonEntity, mp => mp.room, { cascade: true })
+  movieRoles: MoviePersonEntity[];
 
-  @Column({ type: 'boolean', default: false })
-  is_in_home_page: boolean;
-
+  @OneToOne(() => RatingEntity, (ratingEntity: RatingEntity) => ratingEntity.room)
+  rating: RatingEntity;
 }

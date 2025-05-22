@@ -49,6 +49,9 @@ export class UserEntity extends BaseEntity {
   @UpdateDateColumn({ type: 'datetime' })
   update_date: Date;
 
+  @Column({ type: 'varchar', nullable: true })
+  stripe_customer_id: string;
+
   @OneToOne(() => UserInfoEntity, (userInfo: UserInfoEntity) => userInfo.user)
   user_info: UserInfoEntity;
 
@@ -56,8 +59,9 @@ export class UserEntity extends BaseEntity {
   video: VideoEntity[]
 
   @OneToMany(() => OtpEntity, (otp: OtpEntity) => otp.user)
-  otp: OtpEntity
+  otp: OtpEntity[]
 
   @OneToMany(() => TokenBlackListEntity, (token: TokenBlackListEntity) => token.user)
   expired_token: TokenBlackListEntity
+
 }

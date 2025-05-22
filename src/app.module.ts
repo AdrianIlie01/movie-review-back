@@ -17,10 +17,15 @@ import { TokenBlackListModule } from './token-black-list/token-black-list.module
 import { SessionModule } from './session/session.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { CommentsModule } from './comments/comments.module';
+import { PersonModule } from './person/person.module';
+import { MoviePersonModule } from './movie-person/movie-person.module';
+import { RatingModule } from './rating/rating.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({}),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       // host: 'localhost',
@@ -54,6 +59,9 @@ import { CommentsModule } from './comments/comments.module';
     SessionModule,
     FirebaseModule,
     CommentsModule,
+    PersonModule,
+    MoviePersonModule,
+    RatingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

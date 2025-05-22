@@ -18,7 +18,6 @@ export class UserInfoService {
       userInfo.person_region = person_region;
 
       if (user) {
-        console.log('m');
        userInfo.user = user;
        return await userInfo.save();
 
