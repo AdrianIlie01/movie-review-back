@@ -13,6 +13,7 @@ import { Action } from "../shared/action";
 import { MailService } from "../mail/mail.service";
 import { ResetForgottenPasswordDto } from "./dto/reset-forgotten-password.dto";
 import { UpdatePasswordDto } from "./dto/update-password.dto";
+import { ChangeRoleDto } from "./dto/change-role.dto";
 
 @Injectable()
 export class UserService
@@ -111,6 +112,37 @@ export class UserService
 
     } catch (e) {
       throw new BadRequestException(e.message)
+    }
+  }
+
+  async enable2fa(id: string) {
+    try {
+      const user = await UserEntity.findOne({
+        where: {
+          id: id,
+        },
+      });
+      user.is_2_fa_active = true;
+      await user.save();
+
+      return {
+        message: '2_fa.enabled',
+      };
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  async changeRole(changeRole: ChangeRoleDto) {
+    try {
+      const { username, role } = changeRole;
+      const user = await UserEntity.findOne({ where: { username: username } });
+      user.role = role;
+
+      await user.save();
+      return user.role;
+    } catch (e) {
+      throw new BadRequestException(e.message);
     }
   }
 
@@ -288,6 +320,28 @@ export class UserService
       throw new BadRequestException(e.message);
     }
   }
+
+  async sendOtpChangeEmail(id: string, ip: string) {
+    try {
+      const user = await UserEntity.findOne({ where: { id: id } });
+
+      const generatedOtp = await this.generateOtp(id, ip, Action.ChangeEmail);
+
+      const sendOtp = await this.mailService.sendOtpEmail(
+        user.email,
+        user.username,
+        generatedOtp['otp'],
+      );
+
+      return {
+        message: 'otp.sent',
+      };
+    } catch (e) {
+      console.log(e);
+      throw new BadRequestException(e.message);
+    }
+  }
+
   async changeEmail(id: string, changeEmail: ChangeEmailDto, ip: string) {
     try {
       const { email, otp } = changeEmail;
@@ -335,27 +389,6 @@ export class UserService
     }
   }
 
-  async sendOtpChangeEmail(id: string, ip: string) {
-    try {
-      const user = await UserEntity.findOne({ where: { id: id } });
-
-      const generatedOtp = await this.generateOtp(id, ip, Action.ChangeEmail);
-
-      const sendOtp = await this.mailService.sendOtpEmail(
-        user.email,
-        user.username,
-        generatedOtp['otp'],
-      );
-
-      return {
-        message: 'otp.sent',
-      };
-    } catch (e) {
-      console.log(e);
-      throw new BadRequestException(e.message);
-    }
-  }
-
   async generateOtp(id: string, ip: string, action: Action) {
     try {
       const min = 100000;
@@ -377,7 +410,6 @@ export class UserService
       if (!user) {
         console.log('user does not exist');
         throw new NotFoundException('user notFound');
-        // return savedToken;
       }
 
       const twoFaToken = new OtpEntity();

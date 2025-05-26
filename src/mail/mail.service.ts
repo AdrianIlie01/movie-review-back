@@ -96,16 +96,68 @@ export class MailService {
     try {
 
       const emailSent = await this.transporter.sendMail({
+        from: process.env.EMAIL_FROM,
         to: email,
-        subject: 'Cod verificare OTP',
-        template: './sentOtp',
-        context: {
-          name: username,
-          otp: otp,
-        },
+        subject: process.env.EMAIL_SUBJECT,
+        html: `
+         <html>
+            <head>
+                <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      margin: 0;
+                      padding: 0;
+                      background-color: #f4f4f9;
+                    }
+                  .container {
+                      width: 100%;
+                      max-width: 600px;
+                      margin: 50px auto;
+                      background-color: #ffffff;
+                      padding: 40px 30px;
+                      border-radius: 10px;
+                      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                      text-align: center;
+                    }
+                    h2 {
+                      color: #2e7d32;
+                      margin-bottom: 20px;
+                    }
+                    p {
+                      font-size: 16px;
+                      color: #555555;
+                      margin-bottom: 30px;
+                    }
+                  .otp {
+                      display: inline-block;
+                      font-size: 24px;
+                      font-weight: bold;
+                      color: #ffffff;
+                      background-color: #4CAF50;
+                      padding: 10px 20px;
+                      border-radius: 6px;
+                      letter-spacing: 2px;
+                    }
+                  .footer {
+                      margin-top: 40px;
+                      font-size: 12px;
+                      color: #999999;
+                    }
+               </style>
+            </head>
+            <body>
+              <div class="container">
+                <h2>Hello, ${username}!</h2>
+              <p>To continue, please use the following One-Time Password (OTP):</p>
+              <div class="otp">${otp}</div>
+                <p>This OTP is valid for a limited time. Do not share it with anyone.</p>
+              <div class="footer">
+                If you didn’t request this, you can safely ignore this email.
+              </div>
+              </div>
+          </body>
+        </html>`
       });
-      console.log('email sent');
-      console.log(emailSent);
       return emailSent;
     } catch (e) {
       console.log(e.message);
