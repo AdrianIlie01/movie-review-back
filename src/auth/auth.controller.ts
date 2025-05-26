@@ -51,7 +51,7 @@ export class AuthController {
         res.clearCookie('access_token', {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'none',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
           maxAge: +process.env.ACCESS_TOKEN_EXPIRES_IN,
         });
       }
@@ -60,7 +60,7 @@ export class AuthController {
         res.clearCookie('refresh_token', {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'none',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
           maxAge: +process.env.REFRESH_TOKEN_EXPIRES_IN,
         });
       }
@@ -71,11 +71,13 @@ export class AuthController {
       console.log(login);
 
       if (login.access_token) {
+        console.log('login fara 2fa');
         console.log('parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN)');
         console.log(parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN));
         res.cookie('access_token', login.access_token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
           maxAge: parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN)
         });
         console.log('cookie set');
@@ -83,17 +85,15 @@ export class AuthController {
       }
 
       if (login.access_token_2fa) {
-        console.log('ok ?');
+        console.log('login cu 2fa');
 
         console.log(login.access_token_2fa.access_token);
 
 
-
-        console.log('efore setting access token for 2fa');
-
         res.cookie('access_token', login.access_token_2fa.access_token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
           maxAge: parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN)
         });
 
@@ -107,6 +107,7 @@ export class AuthController {
         res.cookie('refresh_token', login.refresh_token, {
           httpOnly: true, // Protejează cookie-ul de atacuri XSS
           secure: process.env.NODE_ENV === 'production', // Folosește ternary operator pentru a seta secure
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
           maxAge: parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN)
         });
 
@@ -177,7 +178,7 @@ export class AuthController {
       res.cookie('sessionId', login, {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: sessionTtl * 1000,
       });
 
@@ -187,7 +188,7 @@ export class AuthController {
       res.cookie('csrf-token', csrfToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',  // Se trimite doar pe HTTPS în producție
-        sameSite: 'none',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: sessionTtl * 1000,
       });
 
@@ -268,19 +269,38 @@ export class AuthController {
       const verify: any = await this.authService.verifyOtpLogin(id, body.otp, Action.Login, accessTokenCookie);
 
       if (verify.access_token) {
+
+        // if (req.cookies['access_token']) {
+        //   console.log('clearing 2fa access cookie');
+        //   res.clearCookie('access_token', {
+        //     httpOnly: true,
+        //     secure: process.env.NODE_ENV === 'production',
+        //     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        //   });
+        // }
+
         res.cookie('access_token', verify.access_token, {
           httpOnly: true, // Protejează cookie-ul de atacuri XSS
           secure: process.env.NODE_ENV === 'production', // Folosește ternary operator pentru a seta secure
-          sameSite: 'none',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
           maxAge: parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN)
         });
       }
 
       if (verify.refresh_token) {
+
+        // if (req.cookies['refresh_token']) {
+        //   res.clearCookie('refresh_token', {
+        //     httpOnly: true,
+        //     secure: process.env.NODE_ENV === 'production',
+        // sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        //   });
+        // }
+
         res.cookie('refresh_token', verify.refresh_token, {
           httpOnly: true, // Protejează cookie-ul de atacuri XSS
           secure: process.env.NODE_ENV === 'production', // Folosește ternary operator pentru a seta secure
-          sameSite: 'none',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
           maxAge: parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN)
         });
       }
@@ -300,7 +320,7 @@ export class AuthController {
       res.cookie('access_token',access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'none',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN)
       });
 

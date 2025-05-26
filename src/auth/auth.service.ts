@@ -149,9 +149,6 @@ export class AuthService {
     }
   }
 
-
-  //todo login witth 2fa with access_token && refresh_token
-
   async login(loginUserDto: LoginUserDto) {
 
     console.log('?');
@@ -170,7 +167,6 @@ export class AuthService {
 
     user.refresh_token = null;
     await user.save();
-//todo daca are un refresh token deja ar trebui sa il bag in black list
 
     const validateUser = await this.validateUser(loginUserDto);
     if (!validateUser) {
@@ -193,8 +189,6 @@ export class AuthService {
 
     return tokens;
   }
-
-  //todo login for session id
 
     async loginWithSessions(loginUserDto: LoginUserDto, ip: string, userAgent: string) {
 
@@ -254,14 +248,12 @@ export class AuthService {
 
 
     if (isExpired) {
-      console.log('otp introduced is expired');
       await this.generateSendOtp(id, action);
       throw new UnauthorizedException();
     }
   }
   async verifyOtpLogin(id: string, otp: string, action: Action, accessTokenCookie: string) {
     try {
-      console.log('verify-otp');
 
       const user = await UserEntity.findOne({
         where: { id: id },
@@ -270,7 +262,6 @@ export class AuthService {
       const _2fa = await this.otpService.findOneByOtp(id, otp);
 
       if (!_2fa) {
-        console.log('wrong otp');
         throw new UnauthorizedException('wrong otp');
       }
 
