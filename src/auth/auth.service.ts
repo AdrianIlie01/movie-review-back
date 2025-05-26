@@ -127,7 +127,7 @@ export class AuthService {
 
     return {
       refresh_token: refreshToken,
-      access_token: accessToken
+      access_token: accessToken,
     }
   }
 
@@ -149,59 +149,102 @@ export class AuthService {
     }
   }
 
-  async login(loginUserDto: LoginUserDto) {
+  // async login(loginUserDto: LoginUserDto) {
+  //   try {
+  //     console.log('?');
+  //
+  //     await this.deleteInvalidedExpiredTokens();
+  //
+  //     const { username } = loginUserDto;
+  //
+  //     console.log(username);
+  //
+  //     const user = await UserEntity.findOne({
+  //       where: [{ username: username }, { email: username }],
+  //     });
+  //
+  //     console.log(user);
+  //
+  //     user.refresh_token = null;
+  //     await user.save();
+  //
+  //     const validateUser = await this.validateUser(loginUserDto);
+  //     if (!validateUser) {
+  //       console.log('user invalid');
+  //       throw new UnauthorizedException();
+  //     }
+  //
+  //     if (user.is_2_fa_active == true) {
+  //       console.log('user has 2fa active');
+  //       return await this.generateSendOtp(user.id, Action.Login)
+  //     }
+  //
+  //     const tokens = await this.createAccessAndRefreshToken(user);
+  //
+  //     user.refresh_token = tokens.refresh_token;
+  //     await user.save();
+  //
+  //     console.log('tokens');
+  //     console.log(tokens);
+  //
+  //     return tokens;
+  //   } catch (e) {
+  //     throw new BadRequestException(e.message);
+  //   }
+  // }
 
-    console.log('?');
+    async loginWithSessions(loginUserDto: LoginUserDto, ip: string, userAgent: string) {
+    try {
+      await this.deleteInvalidedExpiredTokens();
 
-    await this.deleteInvalidedExpiredTokens();
+      const { username } = loginUserDto;
+      const user = await UserEntity.findOne({
+        where: [{ username: username }, { email: username }],
+      });
 
-    const { username } = loginUserDto;
+      const validateUser = await this.validateUser(loginUserDto);
+      if (!validateUser) {
+        throw new UnauthorizedException('Invalid username or password');
+      }
 
-    console.log(username);
+      user.refresh_token = null;
+      await user.save();
 
-    const user = await UserEntity.findOne({
-      where: [{ username: username }, { email: username }],
-    });
+      if (user.is_2_fa_active == true) {
+        return await this.generateSendOtp(user.id, Action.Login)
+      }
 
-    console.log(user);
-
-    user.refresh_token = null;
-    await user.save();
-
-    const validateUser = await this.validateUser(loginUserDto);
-    if (!validateUser) {
-      console.log('user invalid');
-      throw new UnauthorizedException();
-    }
-
-    if (user.is_2_fa_active == true) {
-      console.log('user has 2fa active');
-      return await this.generateSendOtp(user.id, Action.Login)
-    }
-
-    const tokens = await this.createAccessAndRefreshToken(user);
+      const tokens = await this.createAccessAndRefreshToken(user);
 
       user.refresh_token = tokens.refresh_token;
       await user.save();
 
-    console.log('tokens');
-    console.log(tokens);
+      const sessionId = await this.sessionService.createSession(user.id, ip, userAgent);
 
-    return tokens;
-  }
-
-    async loginWithSessions(loginUserDto: LoginUserDto, ip: string, userAgent: string) {
-
-      const validateUser = await this.validateUser(loginUserDto);
-      if (!validateUser) {
-        throw new UnauthorizedException();
-      }
-
-    const user = await this.usersService.findUserByEmailOrUsername(loginUserDto.username)
-
-      return await this.sessionService.createSession(user.id, ip, userAgent);
+      return {
+        ...tokens,
+        session_id: sessionId,
+      };
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
 
   }
+
+
+  async findBlacklistedToken(refreshToken: string) {
+    try {
+      const blacklistedToken = await TokenBlackListEntity.findOne({
+        where: { token: refreshToken },
+      });
+
+      return blacklistedToken;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+
 
   async generateSendOtp(id: string, action: Action) {
     try {
@@ -252,6 +295,46 @@ export class AuthService {
       throw new UnauthorizedException();
     }
   }
+  async verifyOtpLoginSession(id: string, otp: string, action: Action, accessTokenCookie: string, ip: string, userAgent: string) {
+    try {
+
+      const user = await UserEntity.findOne({
+        where: { id: id },
+      });
+
+      const _2fa = await this.otpService.findOneByOtp(id, otp);
+
+      if (!_2fa) {
+        throw new UnauthorizedException('wrong otp');
+      }
+
+      await this.isOtpExpired(id, _2fa, action);
+
+      if (!accessTokenCookie) {
+        throw new UnauthorizedException('access_token from login user with username and password missing');
+      }
+
+      const decoded: any = jwt.decode(accessTokenCookie);
+      if (!decoded ||  decoded._2fa !== true) {
+        throw new UnauthorizedException('Invalid token for verifying otp - login');
+      }
+
+      const token = await this.createAccessAndRefreshToken(user);
+
+      user.refresh_token = token.refresh_token;
+      await user.save();
+
+      const sessionId = await this.sessionService.createSession(user.id, ip, userAgent);
+
+      return {
+        ...token,
+        session_id: sessionId,
+      };
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
   async verifyOtpLogin(id: string, otp: string, action: Action, accessTokenCookie: string) {
     try {
 

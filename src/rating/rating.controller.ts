@@ -34,7 +34,7 @@ export class RatingController {
   }
 
   @Get('person-movie/id/:id')
-  async findOnePersonMovieRating(@Res() res, @Param('id') id: string) {
+  async findOnePersonOrMovieRating(@Res() res, @Param('id') id: string) {
     try {
       const rating = await this.ratingService.findOneByRoomPersonId(id);
       return res.status(HttpStatus.CREATED).json(rating);

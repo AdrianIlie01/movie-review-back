@@ -12,17 +12,16 @@ import { JwtService } from '@nestjs/jwt';
 import * as jwt from "jsonwebtoken";
 
 @Injectable()
-export class StripeIdGuard implements CanActivate {
+export class IdGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private readonly userService: UserService,
-    private jwtService: JwtService,
+    private readonly userService: UserService
   ) {}
 
   async canActivate(context: ExecutionContext) {
     try {
 
-      console.log('stripe id guard');
+      console.log('id guard');
 
       const request = context.switchToHttp().getRequest();
 
@@ -55,7 +54,6 @@ export class StripeIdGuard implements CanActivate {
       }
 
     } catch (e) {
-      console.error('Error in StripeIdGuard:', e);
       throw new ForbiddenException(e.message);
       // throw e;
     }

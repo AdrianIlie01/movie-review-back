@@ -158,7 +158,7 @@ export class PersonService {
   }
 
 
-  async addTypeToPerson(id: string, newRoles: MoviePersonRole[]) {
+  async addRoleToPerson(id: string, newRoles: MoviePersonRole[]) {
     try {
       const person = await PersonEntity.findOneBy({ id });
       if (!person) {
@@ -207,7 +207,7 @@ export class PersonService {
         return person;
       }
 
-      // salvam movie type ca array-ul type fara type din input
+      // we save person roles without the one from the input
       person.roles = person.roles.filter(
         (t: MoviePersonRole) => !roleToRemove.includes(t)
       );

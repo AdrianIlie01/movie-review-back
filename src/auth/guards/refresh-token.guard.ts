@@ -17,14 +17,12 @@ export class RefreshTokenGuard implements CanActivate {
 
       const request = context.switchToHttp().getRequest();
 
-      // Extrage refresh_token din cookies
       const refreshToken = request.cookies['refresh_token'];
 
       if (!refreshToken) {
         throw new UnauthorizedException('No refresh token provided');
       }
 
-      // Verifică dacă refresh_token-ul este în blacklist
       const blacklistedToken = await TokenBlackListEntity.findOne({
         where: { token: refreshToken },
       });
@@ -33,25 +31,16 @@ export class RefreshTokenGuard implements CanActivate {
         throw new BadRequestException('Refresh token is blacklisted');
       }
 
-      console.log('1');
-      console.log(refreshToken);
-      console.log(typeof refreshToken);
-      console.log('Secret JWT:', process.env.SECRET_JWT);
-
-      // Verifică dacă refresh_token-ul este valid
-      console.log('o sa verify refresh_token');
+      //jwt.verufy - throws an error if the token is invalid or expired
       const decodedRefreshToken = jwt.verify(refreshToken, process.env.SECRET_JWT);
-      console.log(decodedRefreshToken);
-      console.log('2');
-
 
       return true;
 
     } catch (e) {
-      // nu aruncam UnauthorizedException - pentru token expired/ ne valid
-      // pt ca avem in react - front un interceptor ce pe unhonotorized exception
-      // incearca sa apeleze refresh-token
-      // si ar face apelul la infinit catre endpoint
+      // We don't throw UnauthorizedException for expired or invalid tokens,
+      // because the React frontend has an interceptor that, on Unauthorized responses,
+      // automatically calls the refresh-token endpoint.
+      // This would result in an infinite loop of requests if the refresh also fails.
 
       if (e.name === 'TokenExpiredError') {
         throw new BadRequestException('Refresh token has expired');

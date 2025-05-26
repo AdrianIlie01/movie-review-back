@@ -8,8 +8,8 @@ export class SessionGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
 
-    const sessionId = req.cookies['sessionId'];
-    if (!sessionId) throw new UnauthorizedException('Missing session');
+    const sessionId = req.cookies['session_id'];
+    // if (!sessionId) throw new UnauthorizedException('Missing session');
 
     const session = await this.sessionService.getSession(sessionId);
     if (!session) throw new UnauthorizedException('Invalid or expired session');

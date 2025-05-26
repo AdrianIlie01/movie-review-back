@@ -28,63 +28,63 @@ export class MailService {
         subject: process.env.EMAIL_SUBJECT,
         // text: `Hi ${sendOtpEmail.username} your OTP is ${sendOtpEmail.otp}`,
         html: `
-        <html>
-          <head>
-            <style>
-              body {
-                font-family: Arial, sans-serif;
-                margin: 0;
-                padding: 0;
-                background-color: #f4f4f9;
-                height: 100vh;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-              }
-              .container {
-                width: 100%;
-                max-width: 600px;
-                background-color: #ffffff;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                text-align: center;
-              }
-              h1 {
-                color: #4CAF50;
-              }
-              p {
-                font-size: 16px;
-                color: #333;
-                line-height: 1.6;
-              }
-              .cta-button {
-                display: inline-block;
-                background-color: #4CAF50;
-                color: #fff;
-                padding: 10px 20px;
-                text-decoration: none;
-                border-radius: 5px;
-                text-align: center;
-                margin-top: 20px;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-<!--              <h1>Salut, ${sendOtpEmail.username}!</h1>-->
-              
-                 <p>Hi ${sendOtpEmail.username} your OTP is ${sendOtpEmail.otp}</p>
-
-            </div>
+         <html>
+            <head>
+                <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      margin: 0;
+                      padding: 0;
+                      background-color: #f4f4f9;
+                    }
+                  .container {
+                      width: 100%;
+                      max-width: 600px;
+                      margin: 50px auto;
+                      background-color: #ffffff;
+                      padding: 40px 30px;
+                      border-radius: 10px;
+                      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                      text-align: center;
+                    }
+                    h2 {
+                      color: #2e7d32;
+                      margin-bottom: 20px;
+                    }
+                    p {
+                      font-size: 16px;
+                      color: #555555;
+                      margin-bottom: 30px;
+                    }
+                  .otp {
+                      display: inline-block;
+                      font-size: 24px;
+                      font-weight: bold;
+                      color: #ffffff;
+                      background-color: #4CAF50;
+                      padding: 10px 20px;
+                      border-radius: 6px;
+                      letter-spacing: 2px;
+                    }
+                  .footer {
+                      margin-top: 40px;
+                      font-size: 12px;
+                      color: #999999;
+                    }
+               </style>
+            </head>
+            <body>
+              <div class="container">
+                <h2>Hello, ${sendOtpEmail.username}!</h2>
+              <p>To continue, please use the following One-Time Password (OTP):</p>
+              <div class="otp">${sendOtpEmail.otp}</div>
+                <p>This OTP is valid for a limited time. Do not share it with anyone.</p>
+              <div class="footer">
+                If you didn’t request this, you can safely ignore this email.
+              </div>
+              </div>
           </body>
-        </html>`,
-        // attachments: [
-        //   {
-        //     filename: 'imagine.png',      // numele fișierului atașat
-        //     path: `${videoPath}/imagine.png`
-        //   }
-        // ],
+        </html>`
       });
 
     } catch (e) {

@@ -1,12 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Res } from "@nestjs/common";
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Res, UseGuards } from "@nestjs/common";
 import { UserInfoService } from './user-info.service';
 import { CreateUserInfoDto } from './dto/create-user-info.dto';
 import { UpdateUserInfoDto } from './dto/update-user-info.dto';
+import { LoginGuard } from "../auth/guards/login.guards";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
 
 @Controller('user-info')
 export class UserInfoController {
   constructor(private readonly userInfoService: UserInfoService) {}
 
+  @UseGuards(LoginGuard)
   @Post(':id')
   async create(
     @Res() res,
@@ -22,6 +26,9 @@ export class UserInfoController {
 
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Get()
   async findAll(
     @Res() res
@@ -34,6 +41,7 @@ export class UserInfoController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Get(':id')
   async findOne(
     @Res() res,
@@ -47,6 +55,7 @@ export class UserInfoController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Get('phone/:phone')
   async findOneByPhone(
     @Res() res,
@@ -60,6 +69,7 @@ export class UserInfoController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Get('user/:id')
   async findOneByUser(
     @Res() res,
@@ -73,6 +83,7 @@ export class UserInfoController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Patch(':id')
   async update(
     @Res() res,
@@ -87,6 +98,7 @@ export class UserInfoController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Delete(':id')
   async remove(
     @Res() res,

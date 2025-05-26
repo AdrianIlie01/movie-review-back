@@ -1,14 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Res, Query } from "@nestjs/common";
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Res, Query, UseGuards } from "@nestjs/common";
 import { PersonService } from './person.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import { MoviePersonRole } from "../shared/movie-person-role";
 import { FilterMovies } from "../shared/filter-movies";
+import { LoginGuard } from "../auth/guards/login.guards";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
 
 @Controller('person')
 export class PersonController {
   constructor(private readonly personService: PersonService) {}
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Post()
   async create(@Res() res, @Body() createPersonDto: CreatePersonDto) {
     try {
@@ -19,6 +25,7 @@ export class PersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Get('filter')
   async filter(@Res() res, @Query() query: FilterMovies) {
     try {
@@ -38,6 +45,7 @@ export class PersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Get('id/:id')
   async findOne(@Res() res, @Param('id') id: string) {
     try {
@@ -48,6 +56,9 @@ export class PersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Patch('id/:id')
   async update(@Res() res, @Param('id') id: string, @Body() updatePersonDto: UpdatePersonDto) {
     try {
@@ -58,6 +69,9 @@ export class PersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Patch('add-image/:id')
   async addImage(@Res() res, @Param('id') id: string, @Body() body:{image: string}) {
     try {
@@ -68,6 +82,9 @@ export class PersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Patch('remove-image/:id')
   async removeImage(@Res() res, @Param('id') id: string, @Body() body:{image: string}) {
     try {
@@ -78,26 +95,35 @@ export class PersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Patch('add-role/:id')
-  async addType(@Res() res, @Param('id') id: string, @Body() body:{type: MoviePersonRole[]}) {
+  async addRole(@Res() res, @Param('id') id: string, @Body() body:{role: MoviePersonRole[]}) {
     try {
-      const room = await this.personService.addTypeToPerson(id,body.type )
+      const room = await this.personService.addRoleToPerson(id,body.role )
       return res.status(HttpStatus.CREATED).json(room);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }
   }
 
-  @Patch('remove-type/:id')
-  async removeType(@Res() res, @Param('id') id: string, @Body() body:{type: MoviePersonRole[]}) {
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
+  @Patch('remove-role/:id')
+  async removeRole(@Res() res, @Param('id') id: string, @Body() body:{role: MoviePersonRole[]}) {
     try {
-      const room = await this.personService.removeRole(id,body.type )
+      const room = await this.personService.removeRole(id,body.role )
       return res.status(HttpStatus.CREATED).json(room);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Delete('id/:id')
   async remove(@Res() res, @Param('id') id: string) {
     try {

@@ -17,13 +17,15 @@ import { LoginGuard } from "../auth/guards/login.guards";
 import { ChangeEmailDto } from "./dto/change-email.dto";
 import { ResetForgottenPasswordDto } from "./dto/reset-forgotten-password.dto";
 import { UpdatePasswordDto } from "./dto/update-password.dto";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('register')
- async create(
+  async create(
     @Res() res,
     @Body() createUserDto: CreateUserDto) {
     try {
@@ -96,6 +98,9 @@ export class UserController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Get()
   async  findAll(
     @Res() res,
@@ -114,14 +119,13 @@ export class UserController {
   ) {
     try {
       const date = new Date();
-      console.log(date);
-      
       return res.status(HttpStatus.OK).json(date);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }
   }
 
+  @UseGuards(LoginGuard)
   @Get(':id')
   async findOne(
     @Res() res,
@@ -135,6 +139,7 @@ export class UserController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Patch(':id')
   async update(
     @Res() res,
@@ -184,6 +189,7 @@ export class UserController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Delete(':id')
   async remove(
     @Res() res,

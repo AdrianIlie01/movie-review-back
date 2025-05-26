@@ -18,7 +18,7 @@ export class RolesGuard implements CanActivate {
       // const authHeader = request.headers.authorization;
       // const token = authHeader.split(' ')[1];
 
-      const accessToken = request.cookies['access_token']; // Citește token-ul din cookie
+      const accessToken = request.cookies['access_token'];
 
       const decodedToken = await this.jwtService.decode(accessToken);
       const userRole = decodedToken['roles'];
@@ -26,7 +26,7 @@ export class RolesGuard implements CanActivate {
       // return roles.includes(userRole);
       if (!roles.includes(userRole)) {
         throw new ForbiddenException(
-          `Userul trebuie sa aibe rol(uri) de: ${roles.join(', ')}`
+          `User must have one of the following roles: ${roles.join(', ')}`
         );
       }
 

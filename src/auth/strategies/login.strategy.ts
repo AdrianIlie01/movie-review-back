@@ -6,7 +6,6 @@ import {
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
 import { UserEntity } from '../../user/entities/user.entity';
-import { AuthService } from '../auth.service';
 import * as jwt from 'jsonwebtoken';
 import * as process from "process";
 import { TokenBlackListEntity } from "../../token-black-list/entities/token-black-list.entity";
@@ -14,7 +13,7 @@ import { TokenBlackListEntity } from "../../token-black-list/entities/token-blac
 @Injectable()
 // passport strategy return in req.user
 export class LoginStrategy extends PassportStrategy(Strategy, 'login') {
-  constructor(private readonly authService: AuthService) {
+  constructor() {
     super();
   }
   async validate(req) {
@@ -42,13 +41,9 @@ export class LoginStrategy extends PassportStrategy(Strategy, 'login') {
 
        const user = await UserEntity.findOne({ where: { username: decodedAccessToken.username } });
 
-      console.log('1');
-
        if (!user) {
          throw new UnauthorizedException('User not found');
        }
-
-      console.log('2');
 
 
        if (decodedAccessToken._2fa === true) {
@@ -62,7 +57,6 @@ export class LoginStrategy extends PassportStrategy(Strategy, 'login') {
       // req.user = decodedAccessToken;
       return { message: 'User authenticated successfully', decodedAccessToken };
     } catch (e) {
-      console.log('Error in LoginStrategy:', e);
       throw new UnauthorizedException(e.message);
     }
   }

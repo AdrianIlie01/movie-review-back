@@ -3,14 +3,14 @@ import { StripeService } from './stripe.service';
 import { CreateStripeDto } from './dto/create-stripe.dto';
 import { UpdateStripeDto } from './dto/update-stripe.dto';
 import { LoginGuard } from "../auth/guards/login.guards";
-import { StripeIdGuard } from "../auth/guards/stripe-id.guard";
+import { IdGuard } from "../auth/guards/id-guard.service";
 
 @Controller('stripe')
 export class StripeController {
   constructor(private readonly stripeService: StripeService) {}
 
   @UseGuards(LoginGuard)
-  @UseGuards(StripeIdGuard)
+  @UseGuards(IdGuard)
   @Post('create-stripe-customer/:id')
   async createStripeCustomer(@Res() res, @Param('id') id: string) {
     try {
@@ -22,7 +22,7 @@ export class StripeController {
   }
 
   @UseGuards(LoginGuard)
-  @UseGuards(StripeIdGuard)
+  @UseGuards(IdGuard)
   @Post('create-pay-intent/:id')
   async paymentIntent(@Res() res, @Param('id') id: string, body: {amount: string}) {
     try {
@@ -37,7 +37,7 @@ export class StripeController {
   }
 
   @UseGuards(LoginGuard)
-  @UseGuards(StripeIdGuard)
+  @UseGuards(IdGuard)
   @Post('attach-card/:paymentMethodId/:id')
   async saveCard(
     @Res() res,
@@ -56,7 +56,7 @@ export class StripeController {
   }
 
   @UseGuards(LoginGuard)
-  @UseGuards(StripeIdGuard)
+  @UseGuards(IdGuard)
   @Get('get-saved-card/:id')
   async getSavedCard(@Res() res, @Param('id') id: string) {
     try {

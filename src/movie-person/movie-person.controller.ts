@@ -1,12 +1,30 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, HttpStatus, NotFoundException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Res,
+  HttpStatus,
+  NotFoundException,
+  UseGuards
+} from "@nestjs/common";
 import { MoviePersonService } from './movie-person.service';
 import { CreateMoviePersonDto } from './dto/create-movie-person.dto';
 import { UpdateMoviePersonDto } from './dto/update-movie-person.dto';
+import { LoginGuard } from "../auth/guards/login.guards";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
 
 @Controller('movie-person')
 export class MoviePersonController {
   constructor(private readonly moviePersonService: MoviePersonService) {}
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Post()
   async create(@Res() res, @Body() createDto: CreateMoviePersonDto) {
     try {
@@ -17,6 +35,9 @@ export class MoviePersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Get()
   async findAll(@Res() res) {
     try {
@@ -27,6 +48,9 @@ export class MoviePersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Get('id/:id')
   async findOne(@Res() res, @Param('id') id: string) {
     try {
@@ -37,6 +61,9 @@ export class MoviePersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Patch('id/:id')
   async update(
     @Res() res,
@@ -54,6 +81,9 @@ export class MoviePersonController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Delete('id/:id')
   async remove(@Res() res, @Param('id') id: string) {
     try {

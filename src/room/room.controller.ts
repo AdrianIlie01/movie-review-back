@@ -17,15 +17,21 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 import { CreateRatingDto } from "../rating/dto/create-rating.dto";
 import { MovieType } from "../shared/movie-type";
 import { LoginGuard } from "../auth/guards/login.guards";
-import { StripeIdGuard } from "../auth/guards/stripe-id.guard";
+import { IdGuard } from "../auth/guards/id-guard.service";
 import { FilterMovies } from "../shared/filter-movies";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
 
 @Controller('room')
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
+
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Post()
- async create(
+  async create(
    @Res() res,
    // @UploadedFile() file: Express.Multer.File,
    @Body() createRoomDto: CreateRoomDto
@@ -43,9 +49,7 @@ export class RoomController {
     }
   }
 
-  // @UseGuards(LoginGuard)
-  // @UseGuards(RolesGuard)
-  // @Roles('admin')
+  @UseGuards(LoginGuard)
   @Get('name/:name')
   async getRoom(@Res() res, @Param('name') name: string) {
     try {
@@ -66,6 +70,7 @@ export class RoomController {
     }
   }
 
+  @UseGuards(LoginGuard)
   @Get('id/:id')
   async findOne(@Res() res, @Param('id') id: string) {
     try {
@@ -77,7 +82,7 @@ export class RoomController {
     }
   }
 
-
+  @UseGuards(LoginGuard)
   @Get('type/:type')
   async findByType(@Res() res, @Param('type') type: string) {
     try {
@@ -89,7 +94,7 @@ export class RoomController {
     }
   }
 
-
+  @UseGuards(LoginGuard)
   @Get('filter')
   async filter(@Res() res, @Query() query: FilterMovies) {
     try {
@@ -100,6 +105,9 @@ export class RoomController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Patch('id/:id')
   async update(@Res() res, @Param('id') id: string, @Body() updateRoomDto: UpdateRoomDto) {
     try {
@@ -110,6 +118,9 @@ export class RoomController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Patch('add-type/:id')
   async addType(@Res() res, @Param('id') id: string, @Body() body:{type: MovieType[]}) {
     try {
@@ -120,6 +131,9 @@ export class RoomController {
     }
   }
 
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Patch('remove-type/:id')
   async removeType(@Res() res, @Param('id') id: string, @Body() body:{type: MovieType[]}) {
     try {
@@ -130,7 +144,9 @@ export class RoomController {
     }
   }
 
-
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
   @Delete('id/:id')
  async remove(@Res() res, @Param('id') id: string) {
     try {
