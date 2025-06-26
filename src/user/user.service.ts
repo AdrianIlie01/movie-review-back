@@ -99,6 +99,49 @@ export class UserService
       throw new BadRequestException(e.message)
     }
   }
+  async checkEmailAvailability(email: string) {
+    try{
+      const  user = await UserEntity.findOne({
+        where: { email: email },
+      });
+
+
+      if (user) {
+        return {
+          message: 'email taken',
+        }
+      } else {
+        return {
+          message: 'email available',
+        }
+      }
+
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+  }
+
+  async checkUsernameAvailability(username: string) {
+    try{
+      const  user = await UserEntity.findOne({
+        where: { username: username },
+      });
+
+
+      if (user) {
+        return {
+          message: 'username taken',
+        }
+      } else {
+        return {
+          message: 'username available',
+        }
+      }
+
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+  }
 
   async findUserByEmailOrUsername(identificator: string) {
     try{
@@ -235,6 +278,10 @@ export class UserService
   ) {
     try {
       const { otp, newPassword, verifyPassword } = resetForgottenPassword;
+
+      console.log('otp');
+      console.log(otp);
+
       const savedOtp = await OtpEntity.findOne({
         where: {
           otp: otp,
@@ -260,7 +307,7 @@ export class UserService
         await savedOtp.remove();
         await this.sendEmailResetPassword(user.email, ip);
         throw new HttpException(
-          'Otp expired sent a new otp',
+          'This OTP is expired. A new OTP has been sent.',
           HttpStatus.BAD_REQUEST,
         );
         // return { message: 'sent.newOtp' };
@@ -284,6 +331,20 @@ export class UserService
       await user.save();
       await savedOtp.remove();
 
+
+      const otpForgottenPassword = await OtpEntity.find({
+        where: {
+          user: {id: user.id},
+          action: Action.ChangeForgottenPassword,
+        }
+      })
+
+      await Promise.all(
+        otpForgottenPassword.map(async (otp: OtpEntity) => {
+          await otp.remove();
+        }),
+      );
+
       return {
         message: 'password.reset',
       };
@@ -297,11 +358,21 @@ export class UserService
       const user = await UserEntity.findOne({
         where: [{ username: userIdentifier }, { email: userIdentifier }],
       });
+
+      if (!user) {
+        console.log('user does not exist');
+        throw new NotFoundException('user not found');
+      }
+
       const generatedOtp = await this.generateOtp(
         user.id,
         ip,
         Action.ChangeForgottenPassword,
       );
+
+      console.log('otp sent one time');
+      console.log(generatedOtp['otp']);
+
       // if otp existent resends the email
       if (Object.keys(generatedOtp).length !== 0) {
         const sendOtp = await this.mailService.sendOtpEmail(
@@ -313,6 +384,8 @@ export class UserService
           message: 'otp.sent',
         };
       }
+      console.log('otp existent');
+      console.log(generatedOtp['otp']);
       return {
         message: 'otp.existent',
       };

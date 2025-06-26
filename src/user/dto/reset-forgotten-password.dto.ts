@@ -5,10 +5,10 @@ export class ResetForgottenPasswordDto {
   otp: string;
 
   @IsNotEmpty({ message: 'newPass empty - dto' })
-  @MinLength(4, { message: 'newPass must be > 4 - dto' })
+  @MinLength(4, { message: 'New Password must be at least 4 characters long.' })
   newPassword: string;
 
   @IsNotEmpty({ message: 'verifyPass empty - dto' })
-  @MinLength(4, { message: 'verifyPass must be > 4 - dto' })
+  @MinLength(4, { message: 'Confirm Password must be at least 4 characters long.' })
   verifyPassword: string;
 }

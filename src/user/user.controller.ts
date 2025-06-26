@@ -50,7 +50,23 @@ export class UserController {
       if (req.cookies && req.cookies.access_token) {
         console.log('no ?');
         const token = req.cookies.access_token;
-        const decodedToken = await this.userService.decodeToken(token);
+        const decodedToken: any = await this.userService.decodeToken(token);
+        console.log('decodedToken');
+        console.log(decodedToken);
+
+        const user = await this.userService.findOne(decodedToken.id);
+
+        if (user) {
+          const token = {
+            id: user.id,
+            username: user.username,
+            roles: user.role,
+            authenticate: decodedToken.authenticate,
+            iat: decodedToken.iat,
+            exp: decodedToken.exp
+          }
+          return res.status(HttpStatus.OK).json(token);
+        }
 
         console.log('returnam JWT PAYLOAD - user has ACCESS_TOKEN');
         return res.status(HttpStatus.OK).json(decodedToken);
@@ -142,6 +158,31 @@ export class UserController {
     }
   }
 
+  @Get('check-email-availability/:email')
+  async  findByEmail(
+    @Res() res,
+    @Param('email') email: string
+  ) {
+    try {
+      const check = await this.userService.checkEmailAvailability(email);
+      return res.status(HttpStatus.OK).json(check);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @Get('check-username-availability/:username')
+  async  findByName(
+    @Res() res,
+    @Param('username') username: string
+  ) {
+    try {
+      const check = await this.userService.checkUsernameAvailability(username);
+      return res.status(HttpStatus.OK).json(check);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
   @UseGuards(LoginGuard)
   @Post('enable2fa/:id')
   async enable2fa(@Res() res, @Param('id') id: string) {
@@ -216,7 +257,6 @@ export class UserController {
     }
   }
 
-  @UseGuards(LoginGuard)
   @Post('send-otp-reset-password')
   async sendOtpChangePassword(
     @Res() res,
@@ -226,6 +266,8 @@ export class UserController {
     try {
       const forwardedFor = req.headers['x-forwarded-for'];
       const userIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor?.split(',')[0]?.trim() || req.ip;
+      console.log('userIdentifier');
+      console.log(userIdentifier);
       const reset = await this.userService.sendEmailResetPassword(
         userIdentifier,
         userIp,

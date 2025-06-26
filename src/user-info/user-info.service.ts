@@ -22,7 +22,7 @@ export class UserInfoService {
        return await userInfo.save();
 
       } else {
-        return  new BadRequestException({}, {description: 'nu exista user cu acel id'})
+        return  new BadRequestException({}, {description: 'User not found'})
       }
 
     } catch (e) {

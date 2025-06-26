@@ -33,15 +33,18 @@ export class IdGuard implements CanActivate {
 
       const decodedToken: any = jwt.verify(accessToken, process.env.SECRET_JWT);
 
-      const userName = decodedToken.username;
+      console.log(decodedToken);
 
-      const user = await this.userService.findOneByName(userName);
+      const userId = decodedToken.id;
+
+      const user = await this.userService.findOne(userId);
 
       if (!user) {
+        console.log('user not found');
         throw new UnauthorizedException('User not found');
       }
 
-      const userId = decodedToken.id;
+      // const userId = decodedToken.id;
 
       const idFromCode = request.params.id;
 

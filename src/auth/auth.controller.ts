@@ -192,7 +192,7 @@ export class AuthController {
   }
 
 
-  @UseGuards(SessionGuard)
+  // @UseGuards(SessionGuard)
   @Post('logout/session')
   async logoutSession(
     @Req() req,
@@ -430,8 +430,7 @@ export class AuthController {
         return res.status(HttpStatus.OK).json(false);
       }
 
-      const user = await UserEntity.findOne({ where: { username: decodedAccessToken.username } });
-
+      const user = await UserEntity.findOne({ where: { id: decodedAccessToken.id } });
 
       if (!user) {
         return res.status(HttpStatus.OK).json(false);

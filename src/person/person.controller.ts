@@ -3,10 +3,10 @@ import { PersonService } from './person.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import { MoviePersonRole } from "../shared/movie-person-role";
-import { FilterMovies } from "../shared/filter-movies";
 import { LoginGuard } from "../auth/guards/login.guards";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
+import { FilterPerson } from "../shared/filter-person";
 
 @Controller('person')
 export class PersonController {
@@ -27,7 +27,7 @@ export class PersonController {
 
   @UseGuards(LoginGuard)
   @Get('filter')
-  async filter(@Res() res, @Query() query: FilterMovies) {
+  async filter(@Res() res, @Query() query: FilterPerson) {
     try {
       const filter = await this.personService.filterPerson(query);
       return res.status(HttpStatus.CREATED).json(filter);
