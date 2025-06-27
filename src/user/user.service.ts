@@ -370,9 +370,6 @@ export class UserService
         Action.ChangeForgottenPassword,
       );
 
-      console.log('otp sent one time');
-      console.log(generatedOtp['otp']);
-
       // if otp existent resends the email
       if (Object.keys(generatedOtp).length !== 0) {
         const sendOtp = await this.mailService.sendOtpEmail(
@@ -492,7 +489,7 @@ export class UserService
 
       const existentOtp = await OtpEntity.findOne({
         where: {
-          user: user,
+          user: { id: user.id },
           action: action,
         },
       });
@@ -504,7 +501,7 @@ export class UserService
         if (isExpired) {
           const expiredOtp = await OtpEntity.find({
             where: {
-              user: existentOtp.user,
+              user: {id: existentOtp.user.id},
               action: action,
             },
           });
@@ -517,14 +514,17 @@ export class UserService
           twoFaToken.otp = otp;
           savedToken = await twoFaToken.save();
           const { ...tokenData } = savedToken;
+          console.log('expiredOtp');
           return tokenData;
         }
+        console.log('existentOtp && !isExpired');
         // existentOtp - true but is not expired it does not save another otp
         const { ...tokenData } = existentOtp;
         return tokenData;
       }
 
       if (!existentOtp) {
+        console.log('!existentOtp');
             twoFaToken.otp = otp;
         savedToken = await twoFaToken.save();
       }
