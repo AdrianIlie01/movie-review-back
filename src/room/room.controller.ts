@@ -49,6 +49,22 @@ export class RoomController {
     }
   }
 
+
+  @Get('check-name-availability/:name')
+  async  findByName(
+    @Res() res,
+    @Param('name') name: string
+  ) {
+    try {
+      const check = await this.roomService.checkNameAvailability(name);
+      return res.status(HttpStatus.OK).json(check);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+
+
   @UseGuards(LoginGuard)
   @Get('name/:name')
   async getRoom(@Res() res, @Param('name') name: string) {

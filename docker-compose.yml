@@ -25,21 +25,21 @@ services:
 
   db:
     image: mysql:5.7
-    container_name: dataBase
-#    environment:
-#      MYSQL_ROOT_PASSWORD: root
-#      MYSQL_DATABASE: livestream
-#      MYSQL_USER: livestream
-#      MYSQL_PASSWORD: livestream
-#    ports:
-#      - "3306:3306"
+    container_name: dbMovie
     environment:
-        MYSQL_ROOT_PASSWORD: ${MYSQL_ADDON_PASSWORD}
-        MYSQL_DATABASE: ${MYSQL_ADDON_DB}
-        MYSQL_USER: ${MYSQL_ADDON_USER}
-        MYSQL_PASSWORD: ${MYSQL_ADDON_PASSWORD}
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: livestream
+      MYSQL_USER: livestream
+      MYSQL_PASSWORD: livestream
     ports:
-        - "3306:3306"
+      - "3306:3306"
+#    environment:
+#        MYSQL_ROOT_PASSWORD: ${MYSQL_ADDON_PASSWORD}
+#        MYSQL_DATABASE: ${MYSQL_ADDON_DB}
+#        MYSQL_USER: ${MYSQL_ADDON_USER}
+#        MYSQL_PASSWORD: ${MYSQL_ADDON_PASSWORD}
+#    ports:
+#        - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -47,7 +47,7 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: phpMyAdmin
+    container_name: phpMyAdminMovie
     environment:
       PMA_HOST: dataBase
       PMA_PORT: 3306
@@ -58,15 +58,15 @@ services:
     networks:
       - mynetwork
 
-#  redis:
-#      image: redis:alpine
-#      container_name: redis
-#      ports:
-#        - "6379:6379"
-#      volumes:
-#        - redis_data:/data
-#      networks:
-#        - mynetwork
+  redis:
+      image: redis:alpine
+      container_name: redisMovie
+      ports:
+        - "6379:6379"
+      volumes:
+        - redis_data:/data
+      networks:
+        - mynetwork
 
 volumes:
   mysql_data:

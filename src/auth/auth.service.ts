@@ -8,7 +8,7 @@ import { Action } from "../shared/action";
 import { expirationTime } from "./constants/constants";
 import { OtpEntity } from "../otp/entities/otp.entity";
 import * as process from "process";
-import * as jwt from 'jsonwebtoken';
+import * as jwt from "jsonwebtoken";
 import { MailService } from "../mail/mail.service";
 import { SendOtpEmail } from "../mail/dto/send-otp-email";
 import { Status } from "../shared/status";
@@ -77,7 +77,10 @@ export class AuthService {
       id: user.id,
       username: user.username,
       roles: user.role,
-      _2fa: user.is_2_fa_active
+      // here we use _2fa_required to indicate if the user need to verify 2FA otp
+      _2fa_required: user.is_2_fa_active,
+      _2fa: user.is_2_fa_active,
+      status: user.status,
     };
 
     const accessToken = this.jwtService.sign(accessTokenPayload, {
@@ -106,9 +109,11 @@ export class AuthService {
   async createAccessAndRefreshToken (user: any) {
     const accessTokenPayload = {
       id: user.id,
+      _2fa: user.is_2_fa_active,
       username: user.username,
       roles: user.role,
       authenticate: true,
+      status: user.status,
     };
 
     const accessToken = this.jwtService.sign(accessTokenPayload, {
@@ -134,9 +139,11 @@ export class AuthService {
   async createAccessForRefreshToken (user: any) {
     const accessTokenPayload = {
       id: user.id,
+      _2fa: user.is_2_fa_active,
       username: user.username,
       roles: user.role,
       authenticate: true,
+      status: user.status,
     };
 
     const accessToken = this.jwtService.sign(accessTokenPayload, {
@@ -207,6 +214,10 @@ export class AuthService {
         throw new UnauthorizedException('Invalid username or password');
       }
 
+      if (user.status === Status.Banned) {
+        throw new UnauthorizedException('User is banned');
+      }
+
       user.refresh_token = null;
       await user.save();
 
@@ -217,6 +228,7 @@ export class AuthService {
       const tokens = await this.createAccessAndRefreshToken(user);
 
       user.refresh_token = tokens.refresh_token;
+      user.status = Status.Active;
       await user.save();
 
       const sessionId = await this.sessionService.createSession(user.id, ip, userAgent);
@@ -302,6 +314,10 @@ export class AuthService {
         where: { id: id },
       });
 
+      if(user.status === Status.Banned) {
+        throw new UnauthorizedException('User is banned');
+      }
+
       const _2fa = await this.otpService.findOneByOtp(id, otp);
 
       if (!_2fa) {
@@ -322,9 +338,11 @@ export class AuthService {
       const token = await this.createAccessAndRefreshToken(user);
 
       user.refresh_token = token.refresh_token;
+      user.status = Status.Active;
       await user.save();
 
       const sessionId = await this.sessionService.createSession(user.id, ip, userAgent);
+
 
       return {
         ...token,
@@ -427,7 +445,9 @@ export class AuthService {
       }
 
       user.refresh_token = null;
-      user.status = Status.Inactive;
+      if (user.status !== Status.Banned) {
+        user.status = Status.Inactive;
+      }
       await user.save();
       return {
         message: 'user.logout',

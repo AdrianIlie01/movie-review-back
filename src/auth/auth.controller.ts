@@ -25,6 +25,7 @@ import { CsrfGuard } from "./guards/csrf.guard";
 import * as crypto from 'crypto';
 import * as jwt from "jsonwebtoken";
 import { UserEntity } from "../user/entities/user.entity";
+import { Status } from "../shared/status";
 
 @Controller('auth')
 export class AuthController {
@@ -421,22 +422,34 @@ export class AuthController {
       });
 
       if (blacklistedAccessToken) {
+        console.log('Access token is blacklisted');
         return res.status(HttpStatus.OK).json(false);
       }
 
       const decodedAccessToken: any = jwt.verify(accessToken, process.env.SECRET_JWT);
 
       if (!decodedAccessToken) {
+        console.log('Access token is invalid');
         return res.status(HttpStatus.OK).json(false);
       }
 
       const user = await UserEntity.findOne({ where: { id: decodedAccessToken.id } });
 
+      console.log('user');
+      console.log(user);
+
       if (!user) {
+        console.log('User not found');
         return res.status(HttpStatus.OK).json(false);
       }
 
-      if (decodedAccessToken._2fa === true) {
+      if (decodedAccessToken._2fa_required === true) {
+        console.log('2FA is enabled for this user');
+        return res.status(HttpStatus.OK).json(false);
+      }
+
+      if (user.status === Status.Banned) {
+        console.log('User is banned');
         return res.status(HttpStatus.OK).json(false);
       }
 

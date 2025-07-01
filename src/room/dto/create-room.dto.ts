@@ -1,5 +1,6 @@
 import { IsArray, IsEnum, IsString } from "class-validator";
 import { MovieType } from "../../shared/movie-type";
+import { Optional } from "@nestjs/common";
 
 export class CreateRoomDto {
   @IsString()
@@ -8,8 +9,8 @@ export class CreateRoomDto {
   @IsString()
   stream_url: string;
 
-  @IsString()
-  thumbnail: string;
+  @Optional()
+  thumbnail?: string;
 
   @IsArray()
   @IsEnum(MovieType, { each: true })

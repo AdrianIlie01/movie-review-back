@@ -4,7 +4,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { UserEntity } from "./entities/user.entity";
 import * as bcrypt from "bcrypt";
 import { UserInfoService } from "../user-info/user-info.service";
-import * as jwt from 'jsonwebtoken';
+import * as jwt from "jsonwebtoken";
 import { ChangeEmailDto } from "./dto/change-email.dto";
 import { OtpEntity } from "../otp/entities/otp.entity";
 import { expirationTime } from "../auth/constants/constants";
@@ -14,6 +14,7 @@ import { MailService } from "../mail/mail.service";
 import { ResetForgottenPasswordDto } from "./dto/reset-forgotten-password.dto";
 import { UpdatePasswordDto } from "./dto/update-password.dto";
 import { ChangeRoleDto } from "./dto/change-role.dto";
+import { Status } from "../shared/status";
 
 @Injectable()
 export class UserService
@@ -55,12 +56,16 @@ export class UserService
 
   async findAll() {
     try{
+      const users: UserEntity[] = await UserEntity.find();
 
-      return await UserEntity.find();
+      const sanitizedUsers = users.map(({ password, stripe_customer_id, refresh_token, ...rest }) => rest);
+
+      return sanitizedUsers;
 
     } catch (e) {
       throw new BadRequestException(e.message)
-    }  }
+    }
+  }
 
   async findOne(id: string) {
     try{
@@ -157,29 +162,28 @@ export class UserService
       throw new BadRequestException(e.message)
     }
   }
-
-  async enable2fa(id: string) {
+  async enableDisable2fa(id: string) {
     try {
       const user = await UserEntity.findOne({
         where: {
           id: id,
         },
       });
-      user.is_2_fa_active = true;
+      user.is_2_fa_active = !user.is_2_fa_active;
       await user.save();
 
       return {
-        message: '2_fa.enabled',
+        message: `${user.is_2_fa_active ? '2_fa.enabled' : '2_fa.disabled'}`,
       };
     } catch (e) {
       throw new BadRequestException(e.message);
     }
   }
 
-  async changeRole(changeRole: ChangeRoleDto) {
+  async changeRole(changeRole: ChangeRoleDto, id:string) {
     try {
-      const { username, role } = changeRole;
-      const user = await UserEntity.findOne({ where: { username: username } });
+      const { role } = changeRole;
+      const user = await UserEntity.findOne({ where: { id: id } });
       user.role = role;
 
       await user.save();
@@ -225,6 +229,36 @@ export class UserService
     }
   }
 
+  async banUser(id: string) {
+    try{
+      const user = await UserEntity.findOne({where: { id: id }});
+
+      user.status = Status.Banned;
+      user.save();
+
+      return {
+        message: 'user.banned',
+      };
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+  }
+
+  async unBanUser(id: string) {
+    try{
+      const user = await UserEntity.findOne({where: { id: id }});
+
+      user.status = Status.Inactive;
+      user.save();
+
+      return {
+        message: 'user.unBanned',
+      };
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+  }
+
   async updatePasswordLoggedIn(
     id: string,
     updatePasswordDto: UpdatePasswordDto,
@@ -245,19 +279,19 @@ export class UserService
 
       if (!passwordMatches) {
         throw new HttpException(
-          'Incorrect current password',
+          'Your current password is wrong!',
           HttpStatus.BAD_REQUEST,
         );
       }
       if (newPassword !== verifyPassword) {
         throw new HttpException(
-          'The two passwords do not match',
+          'The confirmation password does not match the new password!',
           HttpStatus.BAD_REQUEST,
         );
       }
       if (await bcrypt.compare(newPassword, user.password)) {
         throw new HttpException(
-          'The new password must be different',
+          'The new password must be different from the old one!',
           HttpStatus.BAD_REQUEST,
         );
       }
@@ -419,12 +453,12 @@ export class UserService
       const user = await UserEntity.findOne({ where: { id: id } });
       const savedOtp = await OtpEntity.findOne({
         where: {
-          user: user,
+          user: { id: user.id },
           otp: otp,
         },
       });
       if (!savedOtp) {
-        throw new HttpException('OTP invalid', HttpStatus.BAD_REQUEST);
+        throw new HttpException('OTP invalid!', HttpStatus.BAD_REQUEST);
       }
       // if otp expired resend it
       const expiredAt = new Date(new Date().getTime());

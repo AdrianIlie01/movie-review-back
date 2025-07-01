@@ -28,20 +28,40 @@ export class RoomService {
 
       room.type = type;
 
-
-
       // if (file) {
       //   room.thumbnail = file.filename;
       // }
 
       // todo - we will not use an image
       //  because the server where i host my app doesnt allow on my free plan to store files on it
-        room.thumbnail = thumbnail;
+        room.thumbnail = 'thumbnail';
 
       const savedRoom = await room.save();
       console.log(savedRoom);
 
       return savedRoom;
+    } catch (e) {
+      throw new BadRequestException(e.message)
+    }
+  }
+
+  async checkNameAvailability(name: string) {
+    try{
+      const  room = await RoomEntity.findOne({
+        where: { name: name },
+      });
+
+
+      if (room) {
+        return {
+          message: 'name taken',
+        }
+      } else {
+        return {
+          message: 'name available',
+        }
+      }
+
     } catch (e) {
       throw new BadRequestException(e.message)
     }

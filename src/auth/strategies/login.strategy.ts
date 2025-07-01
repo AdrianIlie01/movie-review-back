@@ -9,6 +9,7 @@ import { UserEntity } from '../../user/entities/user.entity';
 import * as jwt from 'jsonwebtoken';
 import * as process from "process";
 import { TokenBlackListEntity } from "../../token-black-list/entities/token-black-list.entity";
+import { Status } from "../../shared/status";
 
 @Injectable()
 // passport strategy return in req.user
@@ -46,9 +47,13 @@ export class LoginStrategy extends PassportStrategy(Strategy, 'login') {
        }
 
 
-       if (decodedAccessToken._2fa === true) {
+       if (decodedAccessToken._2fa_required === true) {
          throw new UnauthorizedException('User needs to validate otp');
        }
+
+      if (user.status === Status.Banned) {
+        throw new UnauthorizedException('User is banned');
+      }
 
       if (decodedAccessToken.authenticate !== true) {
         throw new UnauthorizedException('User is not authenticated');

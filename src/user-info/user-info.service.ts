@@ -58,15 +58,29 @@ export class UserInfoService {
   async findOneByUser(id: string) {
     try {
       const user = await UserEntity.findOneBy({id: id})
+
+      const {password, stripe_customer_id, refresh_token, ...sanitizedUser} = user;
+
+      const returnUser = sanitizedUser;
+
       console.log(user);
       if (user) {
         const info = await UserInfoEntity.findOne({
           where:{user: {id: user.id}}
         });
-        return info;
+        if (info) {
+          return {
+            user: sanitizedUser,
+            userInfo: info,
+          };
+        }
+        return {
+          user: returnUser,
+          userInfo: null
+        };
       }
 
-      throw new BadRequestException('user or user-info not found with the provided id');
+      throw new BadRequestException('User or user-info not found with the provided id');
     } catch (e) {
       throw new BadRequestException(e.message);
     }

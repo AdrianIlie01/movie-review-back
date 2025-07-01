@@ -59,12 +59,19 @@ export class UserController {
         if (user) {
           const token = {
             id: user.id,
+            _2fa: user.is_2_fa_active,
             username: user.username,
             roles: user.role,
+            status: user.status,
             authenticate: decodedToken.authenticate,
             iat: decodedToken.iat,
             exp: decodedToken.exp
           }
+
+          if (user.status === 'banned') {
+            throw new BadRequestException('User is banned');
+          }
+
           return res.status(HttpStatus.OK).json(token);
         }
 
@@ -184,10 +191,10 @@ export class UserController {
     }
   }
   @UseGuards(LoginGuard)
-  @Post('enable2fa/:id')
+  @Post('enableDisable2fa/:id')
   async enable2fa(@Res() res, @Param('id') id: string) {
     try {
-      const user = await this.userService.enable2fa(id);
+      const user = await this.userService.enableDisable2fa(id);
       return res.status(HttpStatus.CREATED).json(user);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
@@ -197,11 +204,13 @@ export class UserController {
   @UseGuards(LoginGuard)
   @UseGuards(RolesGuard)
   @Roles('admin')
-  @Patch('/change-role')
+  @Patch('/change-role/:id')
   // an admin can make a user admin, moderator
-  async changeUserRole(@Res() res, @Body() changeStatus: ChangeRoleDto) {
+  async changeUserRole(@Res() res, @Body() changeStatus: ChangeRoleDto,
+                       @Param('id') id: string,
+  ) {
     try {
-      const user = await this.userService.changeRole(changeStatus);
+      const user = await this.userService.changeRole(changeStatus, id);
       return res.status(HttpStatus.OK).json(user);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
@@ -218,6 +227,38 @@ export class UserController {
   ) {
     try {
       const user = await this.userService.update(id, updateUserDto);
+      return res.status(HttpStatus.OK).json(user);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
+  @Patch('ban-user/:id')
+  async banUser(
+    @Res() res,
+    @Param('id') id: string,
+  ) {
+    try {
+      const user = await this.userService.banUser(id);
+      return res.status(HttpStatus.OK).json(user);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
+  @Patch('unban-user/:id')
+  async unBanUser(
+    @Res() res,
+    @Param('id') id: string,
+  ) {
+    try {
+      const user = await this.userService.unBanUser(id);
       return res.status(HttpStatus.OK).json(user);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
