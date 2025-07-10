@@ -14,7 +14,9 @@ export class StripeService {
 
   constructor(private configService: ConfigService) {
     this.stripe = new Stripe(this.configService.get<string>('SECRET_KEY'), {
-      apiVersion: '2025-04-30.basil',
+      // apiVersion: '2025-04-30.basil',
+      apiVersion: "2025-06-30.basil",
+
     });
   }
   async createStripeCustomer(userId: string) {
