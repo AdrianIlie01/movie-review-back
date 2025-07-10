@@ -22,15 +22,19 @@ async function bootstrap() {
       'http://localhost:4200',
       'http://localhost:5173',
     ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 
     exposedHeaders: ['x-forwarded-for', 'set-cookie'],
+
     allowedHeaders: [
-      'Access-Control-Allow-Origin',
       'Content-Type',
       'Authorization',
-      'x-forwarded-for',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Access-Control-Allow-Origin',
+      'Set-Cookie',
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 
     credentials: true,
   });
