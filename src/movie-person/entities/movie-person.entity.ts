@@ -8,7 +8,7 @@ export class MoviePersonEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => RoomEntity, room => room.movieRoles, { onDelete: 'CASCADE' })
+  @ManyToOne(() => RoomEntity, room => room.movieRoles, { eager: true, onDelete: 'CASCADE' })
   room: RoomEntity;
 
   @ManyToOne(() => PersonEntity, person => person.movieRoles, { eager: true, onDelete: 'CASCADE' })
