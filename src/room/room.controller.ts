@@ -51,12 +51,26 @@ export class RoomController {
 
 
   @Get('check-name-availability/:name')
-  async  findByName(
+  async  checkName(
     @Res() res,
     @Param('name') name: string
   ) {
     try {
       const check = await this.roomService.checkNameAvailability(name);
+      return res.status(HttpStatus.OK).json(check);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @Get('check-name-edit-availability/:name/:id')
+  async  checkEditName(
+    @Res() res,
+    @Param('name') name: string,
+    @Param('id') id: string
+  ) {
+    try {
+      const check = await this.roomService.checkNameEditAvailability(name, id);
       return res.status(HttpStatus.OK).json(check);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
@@ -127,6 +141,7 @@ export class RoomController {
   @Patch('id/:id')
   async update(@Res() res, @Param('id') id: string, @Body() updateRoomDto: UpdateRoomDto) {
     try {
+      console.log('a');
       const room = await this.roomService.update(id, updateRoomDto)
       return res.status(HttpStatus.CREATED).json(room);
     } catch (e) {
@@ -172,4 +187,24 @@ export class RoomController {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }
   }
+
+  @Get('default-theme-thumbnail/:name')
+  async getDefaultThumbnail(@Res() res, @Param('name') name: string)  {
+    try {
+      res.sendFile(name, { root: 'uploaded-images' });
+      // return res.status(HttpStatus.CREATED).json(thumbnail);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @Get('thumbnail/:name')
+  async getThumbnail(@Res() res, @Param('name') name: string) {
+    try {
+      res.sendFile(name, { root: 'uploaded-images' });
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
 }

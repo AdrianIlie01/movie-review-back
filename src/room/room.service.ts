@@ -3,7 +3,7 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { UserEntity } from "../user/entities/user.entity";
 import { RoomEntity } from "./entities/room.entity";
-import { getRepository, Like, MoreThanOrEqual, Raw, Repository } from "typeorm";
+import { getRepository, Like, MoreThanOrEqual, Not, Raw, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { RatingService } from "../rating/rating.service";
 import { PersonEntity } from "../person/entities/person.entity";
@@ -132,7 +132,7 @@ export class RoomService {
 
   async findByName(name: string) {
     try {
-      const room = await RoomEntity.find({
+      const room = await RoomEntity.findOne({
         where: {
           name: name,
         },
@@ -165,7 +165,7 @@ export class RoomService {
     // file: Express.Multer.File,
   ) {
     try {
-      const { name, stream_url, thumbnail, release_year } = updateRoomDto;
+      const { name, stream_url, thumbnail, release_year, type } = updateRoomDto;
       const room = await RoomEntity.findOneBy({
         id: id,
       });
@@ -178,6 +178,7 @@ export class RoomService {
       const roomStreamUrl = room.stream_url;
       const roomThumbnail = room.thumbnail;
       const releaseYear = room.release_year;
+      const roomType: MovieType[] = room.type;
 
       typeof name !== 'undefined'
         ? (room.name = name)
@@ -188,8 +189,16 @@ export class RoomService {
         : (room.stream_url = roomStreamUrl);
 
       typeof release_year !== 'undefined'
-        ? (room.release_year = name)
-        : (room.release_year = roomName);
+        ? (room.release_year = release_year)
+        : (room.release_year = releaseYear);
+
+      typeof type !== 'undefined'
+        ? (room.type = type)
+        : (room.type = roomType);
+
+      if (typeof type === undefined && !room.type ) {
+        throw new BadRequestException('Select at least a type for this movie!');
+      }
 
       typeof thumbnail !== 'undefined'
         ? room.thumbnail = thumbnail
@@ -198,6 +207,28 @@ export class RoomService {
       return await room.save();
     } catch (e) {
       throw new BadRequestException(e.message);
+    }
+  }
+
+  async checkNameEditAvailability(name: string, id: string) {
+    try{
+      const  room = await RoomEntity.findOne({
+        where: { name: name, id: Not(id) },
+      });
+
+
+      if (room) {
+        return {
+          message: 'name taken',
+        }
+      } else {
+        return {
+          message: 'name available',
+        }
+      }
+
+    } catch (e) {
+      throw new BadRequestException(e.message)
     }
   }
 
