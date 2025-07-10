@@ -133,4 +133,60 @@ export class PersonController {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: e.message });
     }
   }
+
+  @Get('check-name-availability/:name')
+  async  checkName(
+    @Res() res,
+    @Param('name') name: string
+  ) {
+    try {
+      const check = await this.personService.checkNameAvailability(name);
+      return res.status(HttpStatus.OK).json(check);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @Get('check-name-edit-availability/:name/:id')
+  async  checkEditName(
+    @Res() res,
+    @Param('name') name: string,
+    @Param('id') id: string
+  ) {
+    try {
+      const check = await this.personService.checkNameEditAvailability(name, id);
+      return res.status(HttpStatus.OK).json(check);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @Get('default-person-image/:name')
+  async getDefaultImage(@Res() res, @Param('name') name: string)  {
+    try {
+      res.sendFile(name, { root: 'uploaded-images' });
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @Get('images-name/:id')
+  async getImagesName(@Res() res, @Param('id') id: string) {
+    try {
+      const person = await this.personService.findImagesPerson(id);
+      // res.sendFile(name, { root: 'uploaded-images' });
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @Get('images/file/:filename')
+  getImageFile(@Param('filename') filename: string, @Res() res) {
+    try {
+      return res.sendFile(filename, { root: 'uploaded-images' });
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
 }
