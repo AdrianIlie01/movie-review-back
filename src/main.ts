@@ -12,23 +12,18 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
+      'https://movie-review-front.onrender.com',
       process.env.ORIGIN,
       process.env.ORIGIN_RENDER,
       process.env.ORIGIN_REACT,
-      'https://movie-review-front-jet.vercel.app',
-      'https://movie-review-front-jet.vercel.app/home',
-      'https://react-learn-flax.vercel.app',
-      'https://angular-refresh.vercel.app',
-
-      'https://react-learn-3fn37hc78-adrianilie01s-projects.vercel.app',
       'http://localhost:4200',
-      'http://localhost:5173',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
 
     exposedHeaders: ['set-cookie'],
 
     allowedHeaders: [
+      'Access-Control-Allow-Origin',
       'Content-Type',
       'Authorization',
       'X-Requested-With',
@@ -37,6 +32,18 @@ async function bootstrap() {
     ],
     credentials: true,
   });
+
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'https://movie-review-front.onrender.com');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
 
   app.use(cookieParser());
 
