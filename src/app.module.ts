@@ -40,6 +40,10 @@ import { RatingModule } from './rating/rating.module';
       database: process.env.MYSQL_ADDON_DB,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
+      // instead of opening a new connection - the app will reuse an old one - simultaneous connection = max 3
+      extra: {
+        connectionLimit: 3
+      }
     }),
     JwtModule.register({
       secret: process.env.SECRET_JWT,
