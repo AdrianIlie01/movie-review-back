@@ -42,8 +42,9 @@ import { RatingModule } from './rating/rating.module';
       synchronize: true,
       // instead of opening a new connection - the app will reuse an old one - simultaneous connection = max 3
       extra: {
-        connectionLimit: 3
-      }
+        connectionLimit: 2
+      },
+      keepConnectionAlive: true
     }),
     JwtModule.register({
       secret: process.env.SECRET_JWT,
