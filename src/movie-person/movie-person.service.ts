@@ -62,7 +62,7 @@ export class MoviePersonService {
       }
 
       if (!persons || persons.length === 0) {
-        throw new BadRequestException('Please select at least one person to add.');
+        throw new BadRequestException('Please select at least one cast member to add.');
       }
 
       const room = await RoomEntity.findOneBy({ id: movieId });
