@@ -9,7 +9,7 @@ import {
   UseGuards,
   Res,
   HttpStatus,
-  UploadedFile, Req, Query
+  UploadedFile, Req, Query, ParseIntPipe
 } from "@nestjs/common";
 import { RoomService } from './room.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -94,6 +94,21 @@ export class RoomController {
   async findAll(@Res() res) {
     try {
       const room = await this.roomService.findAll();
+      return res.status(HttpStatus.CREATED).json(room);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @UseGuards(LoginGuard)
+  @Get('paginated')
+  async findAllPaginated(
+    @Res() res,
+    @Query('limit', new ParseIntPipe()) limit: number = 10,
+    @Query('offset', new ParseIntPipe()) offset: number = 0
+  ) {
+    try {
+      const room = await this.roomService.findAllPaginated(limit, offset);
       return res.status(HttpStatus.CREATED).json(room);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);

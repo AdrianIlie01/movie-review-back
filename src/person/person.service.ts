@@ -41,6 +41,21 @@ export class PersonService {
     }
   }
 
+  async findAllPaginated(limit: number, offset: number) {
+    try {
+     return await PersonEntity.find({
+        relations: ['movieRoles'],
+        skip: offset,
+        take: limit,
+        order: { name: 'ASC' }
+      });
+
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
+
   async findOne(id: string) {
     try {
       const person = await PersonEntity.findOne({

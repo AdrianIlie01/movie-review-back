@@ -75,6 +75,18 @@ export class RoomService {
     }
   }
 
+  async findAllPaginated(limit: number, offset: number) {
+    try {
+      return await RoomEntity.find({
+        skip: offset,
+        take: limit,
+        order: {name: "ASC"}
+      });
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
   //filter movie by:
   // movie type: string
   // name - if it contains that string

@@ -15,6 +15,7 @@ import { ResetForgottenPasswordDto } from "./dto/reset-forgotten-password.dto";
 import { UpdatePasswordDto } from "./dto/update-password.dto";
 import { ChangeRoleDto } from "./dto/change-role.dto";
 import { Status } from "../shared/status";
+import { Not } from "typeorm";
 
 @Injectable()
 export class UserService
@@ -66,6 +67,26 @@ export class UserService
       throw new BadRequestException(e.message)
     }
   }
+
+  async findAllPaginated(limit: number, offset: number, currentUserId: string) {
+    try {
+      const users: UserEntity[] = await UserEntity.find({
+        skip: offset,
+        take: limit,
+        where: {
+          id: Not(currentUserId)
+        },
+        order: { username: 'ASC' }
+      });
+
+      const sanitizedUsers = users.map(({ password, stripe_customer_id, refresh_token, ...rest }) => rest);
+
+      return sanitizedUsers;
+    } catch (e) {
+      throw new BadRequestException(e.message);
+    }
+  }
+
 
   async findOne(id: string) {
     try{

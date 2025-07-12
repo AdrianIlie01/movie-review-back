@@ -8,7 +8,7 @@ import {
   Delete,
   BadRequestException,
   HttpStatus,
-  Res, Req, UseGuards
+  Res, Req, UseGuards, Query, ParseIntPipe
 } from "@nestjs/common";
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -138,7 +138,24 @@ export class UserController {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }
   }
-
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
+  @Get('paginated')
+  async  findAllPaginated(
+    @Res() res,
+    @Req() req,
+    @Query('limit', new ParseIntPipe()) limit: number = 10,
+    @Query('offset', new ParseIntPipe()) offset: number = 0
+  ) {
+    try {
+      const currentUserId = req.user.decodedAccessToken.id;
+      const users = await this.userService.findAllPaginated(limit, offset, currentUserId);
+      return res.status(HttpStatus.OK).json(users);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
   @Get('date')
   async  getDate(
     @Res() res,

@@ -1,4 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Res, Query, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpStatus,
+  Res,
+  Query,
+  UseGuards,
+  ParseIntPipe
+} from "@nestjs/common";
 import { PersonService } from './person.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
@@ -39,6 +52,20 @@ export class PersonController {
   async findAll(@Res() res) {
     try {
       const people = await this.personService.findAll();
+      return res.status(HttpStatus.OK).json(people);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: e.message });
+    }
+  }
+
+  @Get('paginated')
+  async  findAllPaginated(
+    @Res() res,
+    @Query('limit', new ParseIntPipe()) limit: number = 10,
+    @Query('offset', new ParseIntPipe()) offset: number = 0
+  ) {
+    try {
+      const people = await this.personService.findAllPaginated(limit, offset);
       return res.status(HttpStatus.OK).json(people);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: e.message });
