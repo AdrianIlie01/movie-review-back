@@ -33,6 +33,9 @@ export class PersonEntity extends BaseEntity {
   movieRoles: MoviePersonEntity[];
 
 
-  @OneToOne(() => RatingEntity, (ratingEntity: RatingEntity) => ratingEntity.person)
-  rating: RatingEntity;
+  @OneToMany(() => RatingEntity, (rating) => rating.person)
+  ratings: RatingEntity[];
+
+  // @OneToMany(()=> RatingEntity, (ratingEntity: RatingEntity) => ratingEntity.person)
+  // rating: RatingEntity[];
 }

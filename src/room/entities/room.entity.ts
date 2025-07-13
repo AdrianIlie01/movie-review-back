@@ -27,6 +27,9 @@ export class RoomEntity extends BaseEntity {
   @OneToMany(() => MoviePersonEntity, mp => mp.room, { cascade: true })
   movieRoles: MoviePersonEntity[];
 
-  @OneToOne(() => RatingEntity, (ratingEntity: RatingEntity) => ratingEntity.room)
-  rating: RatingEntity;
+  @OneToMany(() => RatingEntity, (rating) => rating.room)
+  ratings: RatingEntity[];
+
+  // @OneToMany(() => RatingEntity, (ratingEntity: RatingEntity) => ratingEntity.room)
+  // rating: RatingEntity[];
 }
