@@ -43,6 +43,15 @@ export class RatingController {
     }
   }
 
+  @Get('calculate/id/:id')
+  async calculatePersonOrMovieAverageRating(@Res() res, @Param('id') id: string) {
+    try {
+      const rating = await this.ratingService.calculateAverageRating(id);
+      return res.status(HttpStatus.CREATED).json(rating);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
   @UseGuards(LoginGuard)
   @Patch('rate/id/:id')
   async updateRating(@Res() res, @Req() req, @Param('id') id: string, @Body() dto: CreateRatingDto) {
@@ -52,10 +61,11 @@ export class RatingController {
 
       console.log(userId);
 
-      const rate = await this.ratingService.updateMoviePersonRating(
+      //check if updated is ok
+      const rate = await this.ratingService.addOrUpdateRating(
         id,
         userId,
-        dto.rating)
+        dto)
       return res.status(HttpStatus.CREATED).json(rate);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);

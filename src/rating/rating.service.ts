@@ -16,29 +16,6 @@ export class RatingService {
     private personService: PersonService,
   ) {
   }
-
-  // async create(userId: string, movieOrPersonId: string, dto: CreateRatingDto) {
-  //   try {
-  //     const rating = new RatingEntity();
-  //     rating.userId = userId;
-  //     rating.rating = parseFloat(dto.rating);
-  //     rating.ratingsCount = rating.ratingsCount + 1;
-  //     rating.type = dto.type;
-  //
-  //     if (dto.type.includes(MoviePersonRole.Producer) || dto.type.includes(MoviePersonRole.Actor) || dto.type.includes(MoviePersonRole.Director)) {
-  //       const person = await this.personService.findOne(movieOrPersonId);
-  //       rating.person = person;
-  //     } else {
-  //      const room = await this.roomService.findOne(movieOrPersonId);
-  //      rating.room = room;
-  //     }
-  //
-  //     return rating.save();
-  //   } catch (e) {
-  //     throw new BadRequestException(e.message);
-  //   }
-  // }
-
   async findOne(id: string) {
     try {
       return await RatingEntity.findOneBy({
@@ -61,82 +38,77 @@ export class RatingService {
     }
   }
 
-  async updateMoviePersonRating(moviePersonId: string, userId: string, rating: string) {
-    try {
+  async addOrUpdateRating(moviePersonId: string, userId: string, dto : CreateRatingDto) {
+    const {rating} = dto;
+    const ratingNumber = parseInt(rating)
+    const movie = await RoomEntity.findOne({ where: { id: moviePersonId } });
+    const person = await PersonEntity.findOne({ where: { id: moviePersonId } });
 
-      console.log('dmn');
-      const movie = await RoomEntity.findOne({ where: { id: moviePersonId } });
-      const person = await PersonEntity.findOne({ where: { id: moviePersonId } });
-
-      if (!movie && !person) {
-        throw new NotFoundException('Movie or Person not found');
-      }
-
-      const newRating = Number(rating);
-      if (isNaN(newRating) || newRating < 1 || newRating > 10) {
-        throw new BadRequestException('Rating must be a number between 0 and 10');
-      }
-
-
-      const existingRating = await this.findOneByRoomPersonId(moviePersonId);
-
-      console.log('existingRating');
-      console.log(existingRating);
-
-
-
-      if (existingRating) {
-
-
-        console.log('exists ?');
-
-        const oldTotal = existingRating.rating * existingRating.ratingsCount;
-        const newRatingsCount = existingRating.ratingsCount + 1;
-        const newAverageRating = (oldTotal + newRating) / newRatingsCount;
-
-        existingRating.rating = parseFloat(newAverageRating.toFixed(2));
-        existingRating.ratingsCount = newRatingsCount;
-
-        await existingRating.save();
-
-        return {
-          message: 'Rating updated successfully',
-          newRating: existingRating.rating,
-          ratingsCount: existingRating.ratingsCount,
-        };
-      } else {
-
-        console.log(' create new rating');
-        // const newRatingEntity = new RatingEntity();
-
-        const newRatingEntity = new RatingEntity();
-
-        newRatingEntity.userId = userId;
-        newRatingEntity.ratingsCount = 1;
-        newRatingEntity.rating = +rating;
-
-        if (movie) {
-          newRatingEntity.type = movie.type;
-          newRatingEntity.room = movie;
-        }
-
-        if (person) {
-          newRatingEntity.type = person.roles;
-          newRatingEntity.person = person;
-        }
-
-        await newRatingEntity.save();
-
-        return {
-          message: 'Rating created successfully',
-          newRating: newRatingEntity.rating,
-          ratingsCount: newRatingEntity.ratingsCount,
-        };
-      }
-    } catch (e) {
-      throw new BadRequestException(e.message);
+    if (!movie && !person) {
+      throw new NotFoundException('Movie or Person not found');
     }
+
+    if (ratingNumber < 1 || ratingNumber > 10) {
+      throw new BadRequestException('Rating must be between 1 and 10');
+    }
+
+    let existingRating = await RatingEntity.findOne({
+      where: {
+        userId,
+        ...(movie ? { room: { id: moviePersonId } } : {}),
+        ...(person ? { person: { id: moviePersonId } } : {}),
+      },
+    });
+
+    if (existingRating) {
+        if (movie)  existingRating.type = movie.type;
+        if (person) existingRating.type = person.roles;
+
+      existingRating.rating = ratingNumber;
+      await existingRating.save();
+    } else {
+
+
+      const newRating = new RatingEntity();
+
+      newRating.userId = userId;
+      newRating.rating = ratingNumber;
+      if (movie) {
+        newRating.type = movie.type;
+        newRating.room = movie;
+      } else if (person) {
+        newRating.type = person.roles;
+        newRating.person = person;
+      }
+      await newRating.save();
+    }
+
+    return this.calculateAverageRating(moviePersonId);
   }
 
+
+  async calculateAverageRating(moviePersonId: string) {
+    const movie = await RoomEntity.findOne({ where: { id: moviePersonId } });
+    const person = await PersonEntity.findOne({ where: { id: moviePersonId } });
+
+    const ratings = await RatingEntity.find({
+      where: {
+        ...(movie ? { room: { id: moviePersonId } } : {}),
+        ...(person ? { person: { id: moviePersonId } } : {}),
+      },
+    });
+
+    if (!ratings.length) {
+      return { averageRating: 0, ratingsCount: 0 };
+    }
+
+    const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
+    const averageRating = sum / ratings.length;
+
+    return {
+      averageRating: parseFloat(averageRating.toFixed(2)),
+      ratingsCount: ratings.length,
+    };
+  }
 
 }

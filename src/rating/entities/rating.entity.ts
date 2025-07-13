@@ -18,8 +18,8 @@ export class RatingEntity extends BaseEntity {
   @Column({ type: 'float', default : 0 })
   rating: number;
 
-  @Column({ type: 'int', default : 0 })
-  ratingsCount: number;
+  // @Column({ type: 'int', default : 0 })
+  // ratingsCount: number;
 
   // @Column({type: 'enum', enum: RatingType, nullable: false})
   // type: RatingType;
@@ -27,11 +27,11 @@ export class RatingEntity extends BaseEntity {
   @Column({ type: 'simple-array', nullable: true })
   type: (MovieType | MoviePersonRole)[];
 
-  @OneToOne(() => RoomEntity, (room: RoomEntity) => room.rating, {eager: true})
-  @JoinColumn()
+@ManyToOne( () => RoomEntity, (room: RoomEntity) => room.ratings, {eager: true})
+  @JoinColumn({name: 'room', referencedColumnName: 'id'})
   room?: RoomEntity;
 
-  @OneToOne(() => PersonEntity, (person: PersonEntity) => person.rating, {eager: true})
-  @JoinColumn()
+  @ManyToOne(() => PersonEntity, (person: PersonEntity) => person.ratings, {eager: true})
+  @JoinColumn({name: 'person', referencedColumnName: 'id'})
   person?: PersonEntity;
 }
