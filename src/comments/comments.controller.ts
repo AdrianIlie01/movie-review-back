@@ -19,8 +19,25 @@ export class CommentsController {
       const username = req.user.decodedAccessToken.username;
       const userId = req.user.decodedAccessToken.id;
 
-      await this.commentsService.addComment(movieId, userId, username ,dto);
-      return res.status(HttpStatus.OK).json({ message: 'Comment added' });
+      const message = await this.commentsService.addComment(movieId, userId, username ,dto);
+      return res.status(HttpStatus.OK).json(message);
+    } catch (e) {
+      return res.status(HttpStatus.BAD_REQUEST).json(e);
+    }
+  }
+
+  @UseGuards(LoginGuard)
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'moderator')
+  @Post('update-comment-status/:userId/:movieId')
+  async updateUserCommentsStatusInMovie(
+    @Res() res, @Req() req,
+    @Param('movieId') movieId: string,
+    @Param('userId') userId: string,
+    @Body() dto: {status: string}) {
+    try {
+      const message = await this.commentsService.updateUserCommentsStatusInMovie(movieId, userId, dto);
+      return res.status(HttpStatus.OK).json(message);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }
@@ -34,8 +51,8 @@ export class CommentsController {
       const username = req.user.decodedAccessToken.username;
       const userId = req.user.decodedAccessToken.id;
 
-      await this.commentsService.addDonationMessage(movieId, userId, username ,dto);
-      return res.status(HttpStatus.OK).json({ message: 'Comment added' });
+      const message = await this.commentsService.addDonationMessage(movieId, userId, username ,dto);
+      return res.status(HttpStatus.OK).json(message);
     } catch (e) {
       return res.status(HttpStatus.BAD_REQUEST).json(e);
     }
@@ -44,13 +61,13 @@ export class CommentsController {
 
   @UseGuards(LoginGuard)
   @UseGuards(IdGuard)
-  @Post('delete/:movieId/:commentId')
+  @Post('delete/:id/:movieId/:commentId')
   async delete(@Res() res,
                       @Req() req,
                       @Param('movieId') movieId: string,
+                      @Param('id') id: string,
                       @Param('commentId') commentId: string) {
     try {
-      console.log('pre1');
       await this.commentsService.deleteComment(movieId, commentId);
 
       return res.status(HttpStatus.OK).json({ message: 'Comment deleted' });
