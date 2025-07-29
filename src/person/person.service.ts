@@ -126,13 +126,32 @@ export class PersonService {
 
   async filterPerson(query: FilterPerson) {
       try {
-        const qb = PersonEntity.createQueryBuilder('person')
-          .leftJoinAndSelect('person.rating', 'rating');
+        console.log(typeof query.roles);
+        console.log(query.roles);
 
-        if (query.roles && query.roles.length > 0) {
+        const qb = PersonEntity.createQueryBuilder('person')
+          .leftJoin('person.ratings', 'ratings')
+          .addSelect('AVG(ratings.rating)', 'avgRating')
+          .groupBy('person.id');
+
+        if (query.roles && query.roles.length > 0 &&  typeof query.roles == 'string') {
           qb.andWhere('FIND_IN_SET(:roles, person.roles) > 0', { roles: query.roles });
 
         }
+
+        if (query.roles && query.roles.length > 0 && Array.isArray(query.roles)) {
+          const roleConditions = query.roles.map((role, index) => {
+            const paramName = `role${index}`;
+            return `FIND_IN_SET(:${paramName}, person.roles) > 0`;
+          }).join(' OR ');
+
+          const roleParams = Object.fromEntries(
+            query.roles.map((role, index) => [`role${index}`, role])
+          );
+
+          qb.andWhere(`(${roleConditions})`, roleParams);
+        }
+
 
         if (query.name) {
           qb.andWhere('LOWER(person.name) LIKE :name', {
@@ -146,19 +165,28 @@ export class PersonService {
 
 
         if (query.ratingMin !== undefined) {
-          qb.andWhere('rating.rating >= :ratingMin', {
-            ratingMin: query.ratingMin,
-          });
+          qb.having('AVG(ratings.rating) >= :ratingMin', { ratingMin: query.ratingMin });
         }
 
         if (query.sortField && query.sortOrder) {
           const allowedSortFields = ['name', 'rating', 'release_year', 'born'];
-          if (allowedSortFields.includes(query.sortField)) {
-            let sortColumn = query.sortField;
-            const sortAlias = query.sortField === 'rating' ? 'rating' : 'person'; // random name for the join
-
-            qb.orderBy(`${sortAlias}.${sortColumn}`, query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
+          if (query.sortField === 'rating') {
+            // Sortează după aliasul calculat avgRating
+            qb.orderBy('avgRating', query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
+          } else {
+            // Sortează după coloanele directe din tabela person
+            qb.orderBy(`person.${query.sortField}`, query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
           }
+
+        }
+
+        const pageValid = query.page && query.page > 0;
+        const limitValid = query.limit && query.limit > 0;
+
+        if (pageValid && limitValid) {
+          const page = query.page;
+          const limit = query.limit;
+          qb.skip((page - 1) * limit).take(limit);
         }
 
         return await qb.getMany();
