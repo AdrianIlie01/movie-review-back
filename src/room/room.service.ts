@@ -94,12 +94,25 @@ export class RoomService {
   async filterMovies(query: FilterMovies) {
     try {
       const qb = RoomEntity.createQueryBuilder('room')
-        .leftJoinAndSelect('room.rating', 'rating');
+        .leftJoin('room.ratings', 'ratings')
+        .addSelect('AVG(ratings.rating)', 'avgRating')
+        .groupBy('room.id');
 
-      if (query.type) {
-        // qb.andWhere('room.type = :type', { type: query.type });
+      if (query.type && query.type.length > 0 &&  typeof query.type == 'string') {
         qb.andWhere('FIND_IN_SET(:type, room.type) > 0', { type: query.type });
       }
+
+      if (query.type && query.type.length > 0  && Array.isArray(query.type)) {
+        const typeConditions = query.type.map((type, index) => {
+          const paramName = `type${index}`;
+          qb.setParameter(paramName, type);
+          return `FIND_IN_SET(:${paramName}, room.type)`;
+        });
+
+        qb.andWhere(`(${typeConditions.join(' OR ')})`);
+      }
+
+      // return a movie if it has at least one of the types
 
       if (query.name) {
         qb.andWhere('LOWER(room.name) LIKE :name', {
@@ -108,9 +121,7 @@ export class RoomService {
       }
 
       if (query.ratingMin !== undefined) {
-        qb.andWhere('rating.rating >= :ratingMin', {
-          ratingMin: query.ratingMin,
-        });
+        qb.having('AVG(ratings.rating) >= :ratingMin', { ratingMin: query.ratingMin });
       }
 
       if (query.releaseYear) {
@@ -119,11 +130,23 @@ export class RoomService {
 
       if (query.sortField && query.sortOrder) {
         const allowedSortFields = ['name', 'type', 'rating', 'release_year'];
-        if (allowedSortFields.includes(query.sortField)) {
-          const sortAlias = query.sortField === 'rating' ? 'rating' : 'room'; // random name for the join
-          qb.orderBy(`${sortAlias}.${query.sortField}`, query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
+        if (query.sortField === 'rating') {
+          qb.orderBy('avgRating', query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
+        } else {
+          qb.orderBy(`room.${query.sortField}`, query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
         }
+
       }
+
+      const pageValid = query.page && query.page > 0;
+      const limitValid = query.limit && query.limit > 0;
+
+      if (pageValid && limitValid) {
+        const page = query.page;
+        const limit = query.limit;
+        qb.skip((page - 1) * limit).take(limit);
+      }
+
 
       return await qb.getMany();
     } catch (e) {
