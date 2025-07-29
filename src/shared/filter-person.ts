@@ -5,4 +5,6 @@ export class FilterPerson {
   sortField?: string;
   sortOrder?: 'ASC' | 'DESC';
   ratingMin?: number;
+  page?: number;
+  limit?: number;
 }
