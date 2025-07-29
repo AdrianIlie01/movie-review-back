@@ -2,10 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { CreateRatingDto } from "./dto/create-rating.dto";
 import { RatingEntity } from "./entities/rating.entity";
 import { PersonService } from "../person/person.service";
-import { RatingType } from "../shared/rating-type";
 import { RoomService } from "../room/room.service";
 import { RoomEntity } from "../room/entities/room.entity";
-import { MoviePersonRole } from "../shared/movie-person-role";
 import { PersonEntity } from "../person/entities/person.entity";
 
 @Injectable()
@@ -38,6 +36,7 @@ export class RatingService {
     }
   }
 
+  // an user can add or update his rating for a movie or a cast member
   async addOrUpdateRating(moviePersonId: string, userId: string, dto : CreateRatingDto) {
     const {rating} = dto;
     const ratingNumber = parseInt(rating)
@@ -45,7 +44,7 @@ export class RatingService {
     const person = await PersonEntity.findOne({ where: { id: moviePersonId } });
 
     if (!movie && !person) {
-      throw new NotFoundException('Movie or Person not found');
+      throw new NotFoundException('Movie or cast member not found');
     }
 
     if (ratingNumber < 1 || ratingNumber > 10) {
