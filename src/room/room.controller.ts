@@ -100,7 +100,7 @@ export class RoomController {
     }
   }
 
-  @UseGuards(LoginGuard)
+  // @UseGuards(LoginGuard)
   @Get('paginated')
   async findAllPaginated(
     @Res() res,
@@ -139,7 +139,7 @@ export class RoomController {
     }
   }
 
-  @UseGuards(LoginGuard)
+  // @UseGuards(LoginGuard)
   @Get('filter')
   async filter(@Res() res, @Query() query: FilterMovies) {
     try {

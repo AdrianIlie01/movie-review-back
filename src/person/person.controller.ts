@@ -38,7 +38,7 @@ export class PersonController {
     }
   }
 
-  @UseGuards(LoginGuard)
+  // @UseGuards(LoginGuard)
   @Get('filter')
   async filter(@Res() res, @Query() query: FilterPerson) {
     try {
