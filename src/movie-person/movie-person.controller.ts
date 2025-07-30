@@ -201,8 +201,8 @@ export class MoviePersonController {
   }
 
   @UseGuards(LoginGuard)
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'moderator')
+  // @UseGuards(RolesGuard)
+  // @Roles('admin', 'moderator')
   @Get(':personId/movies')
   async findMoviesByPerson(@Res() res, @Param('personId') personId: string) {
     try {
