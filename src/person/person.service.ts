@@ -126,12 +126,12 @@ export class PersonService {
 
   async filterPerson(query: FilterPerson) {
       try {
-        console.log(typeof query.roles);
-        console.log(query.roles);
 
         const qb = PersonEntity.createQueryBuilder('person')
           .leftJoin('person.ratings', 'ratings')
           .addSelect('AVG(ratings.rating)', 'avgRating')
+          .leftJoinAndSelect('person.movieRoles', 'movieRoles')
+          .leftJoinAndSelect('movieRoles.room', 'room')
           .groupBy('person.id');
 
         if (query.roles && query.roles.length > 0 &&  typeof query.roles == 'string') {
@@ -160,7 +160,7 @@ export class PersonService {
         }
 
         if (query.born) {
-          qb.andWhere('YEAR(person.born) = :bornYear', { bornYear: query.born });
+          qb.andWhere('person.born = :bornDate', { bornDate: query.born });
         }
 
 
@@ -169,16 +169,24 @@ export class PersonService {
         }
 
         if (query.sortField && query.sortOrder) {
-          const allowedSortFields = ['name', 'rating', 'release_year', 'born'];
-          if (query.sortField === 'rating') {
-            // Sortează după aliasul calculat avgRating
-            qb.orderBy('avgRating', query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
-          } else {
-            // Sortează după coloanele directe din tabela person
-            qb.orderBy(`person.${query.sortField}`, query.sortOrder.toUpperCase() as 'ASC' | 'DESC');
+          const sortOrder = query.sortOrder.toUpperCase() as 'ASC' | 'DESC';
+
+          if (query.sortField === 'born') {
+            qb.orderBy('person.born IS NULL', 'ASC')
+              .addOrderBy('person.born', sortOrder);
+
+            qb.andWhere('person.born IS NOT NULL');
           }
 
+          if (query.sortField === 'rating') {
+            qb.orderBy('avgRating', sortOrder);
+            qb.andHaving('avgRating IS NOT NULL');
+          }
+          else {
+            qb.orderBy(`person.${query.sortField}`, sortOrder);
+          }
         }
+
 
         const pageValid = query.page && query.page > 0;
         const limitValid = query.limit && query.limit > 0;
