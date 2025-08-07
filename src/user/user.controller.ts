@@ -44,16 +44,9 @@ export class UserController {
     @Req() req ) {
     try {
       const token = req;
-      console.log('req');
-      console.log(req.cookies);
-
       if (req.cookies && req.cookies.access_token) {
-        console.log('no ?');
         const token = req.cookies.access_token;
         const decodedToken: any = await this.userService.decodeToken(token);
-        console.log('decodedToken');
-        console.log(decodedToken);
-
         const user = await this.userService.findOne(decodedToken.id);
 
         if (user) {
@@ -61,6 +54,8 @@ export class UserController {
             id: user.id,
             _2fa: user.is_2_fa_active,
             username: user.username,
+            email: user.email,
+            create_date: user.create_date,
             roles: user.role,
             status: user.status,
             authenticate: decodedToken.authenticate,
@@ -75,11 +70,9 @@ export class UserController {
           return res.status(HttpStatus.OK).json(token);
         }
 
-        console.log('returnam JWT PAYLOAD - user has ACCESS_TOKEN');
         return res.status(HttpStatus.OK).json(decodedToken);
 
       } else {
-        console.log('nu are cookeis access_token => aunoth access');
         return res.status(HttpStatus.UNAUTHORIZED).json({ message: "Unauthorized: access_token missing" });
       }
     } catch (e) {
@@ -324,8 +317,6 @@ export class UserController {
     try {
       const forwardedFor = req.headers['x-forwarded-for'];
       const userIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor?.split(',')[0]?.trim() || req.ip;
-      console.log('userIdentifier');
-      console.log(userIdentifier);
       const reset = await this.userService.sendEmailResetPassword(
         userIdentifier,
         userIp,
